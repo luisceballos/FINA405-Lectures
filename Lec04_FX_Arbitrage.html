@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lec04 · FX Markets & Arbitrage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#0F2A5C;--navy-deep:#071529;--gold:#C8A84B;--gold-light:#E0C06A;
+  --gain:#15803D;--loss:#DC2626;--warn:#D97706;--teal:#0891B2;--purple:#7C3AED;
+  --bg:#F0F4F8;--surface:#FFFFFF;--surface-2:#F5F8FC;
+  --border:#C8D8EC;--text:#0A1628;--text-muted:#3A5278;--text-subtle:#7896B4;
+  --radius:12px;--shadow:0 2px 16px rgba(15,42,92,0.09);
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#060E1E;--surface:#0C1830;--surface-2:#111F3A;--border:#1E3558;
+  --text:#E8F0FC;--text-muted:#8BA8D0;--text-subtle:#4A6A96;--shadow:0 2px 20px rgba(0,10,30,.5);
+}}
+:root[data-theme="dark"]{--bg:#060E1E;--surface:#0C1830;--surface-2:#111F3A;--border:#1E3558;--text:#E8F0FC;--text-muted:#8BA8D0;--text-subtle:#4A6A96;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;width:100vw;}
+.deck{position:relative;width:100%;height:100vh;overflow:hidden;}
+.slide{position:absolute;inset:0;opacity:0;transform:translateX(48px);transition:opacity .35s ease,transform .35s ease;pointer-events:none;overflow-y:auto;}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all;}
+.slide.exit-left{opacity:0;transform:translateX(-48px);pointer-events:none;}
+@media(prefers-reduced-motion:reduce){.slide{transition:none;}}
+.si{padding:36px 60px 80px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+.si.top{justify-content:flex-start;padding-top:40px;}
+@media(max-width:600px){.si,.si.top{padding:24px 18px 80px;}}
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--navy),var(--gold));transition:width .4s ease;z-index:200;}
+.nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 12px;z-index:100;box-shadow:var(--shadow);}
+.nav-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:3px 8px;font-size:17px;line-height:1;border-radius:6px;transition:all .15s;}
+.nav-btn:hover:not(:disabled){color:var(--navy);background:var(--surface-2);}
+.nav-btn:disabled{opacity:.28;cursor:default;}
+.nav-dots{display:flex;gap:5px;align-items:center;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;border:none;}
+.nav-dot.active{width:20px;border-radius:3px;}
+.nav-dot.c0{} /* title */
+.nav-dot.c1.active,.nav-dot.c1.done{background:var(--teal);}
+.nav-dot.c2.active,.nav-dot.c2.done{background:var(--loss);}
+.nav-dot.c3.active,.nav-dot.c3.done{background:var(--gain);}
+.nav-dot:not(.c1):not(.c2):not(.c3).active{background:var(--navy);}
+.nav-dot:not(.c1):not(.c2):not(.c3).done{background:var(--gold-light);}
+.nav-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-subtle);min-width:32px;text-align:center;}
+.pdf-btn{position:fixed;top:14px;right:16px;z-index:300;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;color:var(--text-muted);cursor:pointer;box-shadow:var(--shadow);transition:all .15s;}
+.pdf-btn:hover{color:var(--navy);border-color:var(--navy);}
+/* TYPE */
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.slide-title{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(26px,3.2vw,46px);color:var(--text);line-height:1.1;margin-bottom:18px;}
+.slide-sub{font-size:16px;color:var(--text-muted);line-height:1.6;margin-bottom:22px;max-width:680px;}
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow);}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-subtle);margin-bottom:10px;}
+.stat-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
+.stat-lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-subtle);margin-bottom:6px;}
+.stat-val{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(20px,2.2vw,32px);color:var(--text);line-height:1;}
+.stat-note{font-size:12px;color:var(--text-muted);margin-top:5px;}
+/* GRIDS */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:620px){.grid2,.grid3{grid-template-columns:1fr;}}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-subtle);padding:7px 9px;border-bottom:2px solid var(--border);text-align:left;}
+.tbl td{padding:9px 9px;border-bottom:1px solid var(--border);font-size:14px;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surface-2);}
+.num{text-align:right;font-family:'JetBrains Mono',monospace;}
+/* UTILS */
+.gain{color:var(--gain);}.loss{color:var(--loss);}.warn{color:var(--warn);}.navy{color:var(--navy);}
+.anno{background:rgba(15,42,92,0.05);border:1px solid rgba(15,42,92,0.14);border-radius:8px;padding:12px 16px;font-size:14px;color:var(--text-muted);line-height:1.6;}
+.anno strong{color:var(--navy);}
+.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 7px;}
+.tag-ok{background:rgba(21,128,61,.1);color:var(--gain);}
+.tag-warn{background:rgba(217,119,6,.1);color:var(--warn);}
+.tag-bad{background:rgba(220,38,38,.1);color:var(--loss);}
+.toggle-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.tog{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.tog.active{background:var(--navy);color:#FFF;border-color:var(--navy);}
+input[type=range]{accent-color:var(--navy);cursor:pointer;width:100%;}
+/* EV CHART */
+.ev-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:12px;}
+.ev-chart-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+/* KATEX */
+.eq-wrap{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 22px;margin:8px 0;}
+.katex-display{overflow-x:auto;margin:0!important;}
+.katex{font-size:1.1em;}
+/* TITLE SLIDE */
+#s0{background:linear-gradient(135deg,var(--navy-deep) 0%,var(--navy) 60%,#1a3a8f 100%);}
+#s0 .eyebrow{color:var(--gold-light);}
+#s0 .slide-title{color:#FFF;font-size:clamp(32px,4.5vw,58px);}
+#s0 .slide-sub{color:rgba(255,255,255,.72);}
+.title-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.12);border-radius:10px;overflow:hidden;max-width:480px;margin-top:32px;}
+.title-meta-cell{background:rgba(255,255,255,.07);padding:14px 18px;}
+.title-meta-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;}
+.title-meta-val{font-size:14px;font-weight:600;color:#FFF;}
+/* FLOW */
+.flow{display:flex;align-items:stretch;gap:0;margin:14px 0;}
+.flow-step{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;min-width:0;}
+.flow-arrow{display:flex;align-items:center;font-size:18px;color:var(--text-subtle);padding:0 4px;flex-shrink:0;}
+.flow-num{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
+.flow-icon{font-size:22px;margin:3px 0;}
+.flow-txt{font-size:11px;color:var(--text-muted);line-height:1.3;}
+/* SIM */
+.sim-select{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;color:var(--text);cursor:pointer;}
+.sim-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--text);}
+.sim-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.sim-btn:hover{background:var(--navy);color:#FFF;border-color:var(--navy);}
+.sim-btn.inject{background:var(--loss);color:#FFF;border-color:var(--loss);}
+/* CARTEL CHAT */
+.cartel-panel{background:#0C0E15;border-radius:12px;border:1px solid #2a2d3a;overflow:hidden;}
+.cartel-header{background:#161920;padding:10px 16px;border-bottom:1px solid #2a2d3a;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6B7585;display:flex;align-items:center;gap:8px;}
+.cartel-header span{color:#E2E8F0;font-weight:700;}
+.cartel-msgs{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.cmsg{display:flex;gap:10px;align-items:flex-start;}
+.cmsg-handle{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#4A8FE7;min-width:110px;flex-shrink:0;padding-top:2px;}
+.cmsg-text{font-size:13px;color:#CBD5E1;line-height:1.5;}
+.cmsg-text em{color:#F59E0B;font-style:normal;font-weight:700;}
+.cmsg-time{font-family:'JetBrains Mono',monospace;font-size:9px;color:#4B5563;flex-shrink:0;padding-top:3px;}
+/* BIG CROSS RATE NUMBERS */
+.big-num{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(20px,2.6vw,38px);line-height:1;font-weight:400;}
+.big-label{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-subtle);margin-bottom:8px;}
+.vs-divider{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--text-subtle);padding:0 8px;}
+/* ARB CONCEPT */
+.arb-big-stmt{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(20px,2.8vw,38px);line-height:1.3;color:var(--text);margin-bottom:20px;}
+.arb-cond{font-family:'JetBrains Mono',monospace;font-size:clamp(16px,2vw,28px);background:var(--navy);color:var(--gold-light);border-radius:10px;padding:14px 24px;display:inline-block;margin:10px 0;}
+/* SIM PATH */
+.sl-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.sl-lbl{font-size:13px;font-weight:600;color:var(--text-muted);min-width:90px;}
+.sl-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--navy);min-width:60px;text-align:right;}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="pgBar"></div>
+<button class="pdf-btn" onclick="exportPDF()">⬇ PDF</button>
+<div class="deck" id="deck">
+
+<!-- ══ S0 · TITLE ══ -->
+<div class="slide" id="s0">
+<div class="si">
+  <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:5px 14px;font-size:11px;font-weight:600;color:#FFF;letter-spacing:.04em;margin-bottom:22px;">🌐 FINA 405 · International Financial Management</div>
+  <div class="eyebrow">Lecture 04</div>
+  <h1 class="slide-title">FX Markets &amp; Arbitrage</h1>
+  <p class="slide-sub">Exchange rate drivers, market manipulation, and how arbitrage restores price consistency.</p>
+  <div class="title-meta">
+    <div class="title-meta-cell"><div class="title-meta-lbl">Instructor</div><div class="title-meta-val">Luis Ceballos, PhD</div></div>
+    <div class="title-meta-cell"><div class="title-meta-lbl">Program</div><div class="title-meta-val">USD Knauss School</div></div>
+    <div class="title-meta-cell"><div class="title-meta-lbl">Term</div><div class="title-meta-val">Fall 2026</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S1 · FX DRIVERS OVERVIEW ══ -->
+<div class="slide" id="s1">
+<div class="si top">
+  <div class="eyebrow">Section 1 · FX Market Drivers</div>
+  <h2 class="slide-title">What Moves Exchange Rates?</h2>
+  <p class="slide-sub">Six forces drive currency supply and demand — and they often interact.</p>
+  <div class="grid2" style="gap:12px;">
+    <div class="card" style="border-left:4px solid var(--teal);">
+      <div class="card-title">📈 Interest Rate Differentials</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,.12);border:1px solid rgba(21,128,61,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--gain);letter-spacing:.04em;margin-bottom:8px;">↑ Higher-rate currency APPRECIATES</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">Higher rates → stronger currency.</strong> Capital flows to higher yields. A surprise Fed hike lifts USD as global investors shift to dollar assets.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gain);">
+      <div class="card-title">📦 Trade Flows</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,.12);border:1px solid rgba(21,128,61,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--gain);letter-spacing:.04em;margin-bottom:8px;">↑ Exporter's domestic currency APPRECIATES</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">Export surplus → domestic currency demand.</strong> Net inflows of foreign currency bid up the exporter's currency. China's persistent current account surplus has supported CNY.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold);">
+      <div class="card-title">💹 Carry Trade</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--warn);letter-spacing:.04em;margin-bottom:8px;">↑ High-yield target · ↓ Low-yield funding currency</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">Borrow cheap, invest high.</strong> Sell JPY/CHF, buy MXN/AUD. When risk collapses, carry unwinds violently — JPY surges as shorts cover.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--purple);">
+      <div class="card-title">🛡️ Safe-Haven Demand</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(21,128,61,.12);border:1px solid rgba(21,128,61,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--gain);letter-spacing:.04em;margin-bottom:8px;">↑ Safe havens (USD / JPY / CHF) APPRECIATE</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">Crisis → flight to quality.</strong> USD, JPY, CHF attract capital in stress. The dollar paradoxically strengthened in 2008 even as the US caused the crisis.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--loss);">
+      <div class="card-title">🏛️ Fiscal &amp; Political Risk</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--loss);letter-spacing:.04em;margin-bottom:8px;">↓ Local currency DEPRECIATES</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">High deficits, instability → currency weakness.</strong> Argentina, Turkey, and Brazil illustrate this repeatedly. Sovereign risk premium shows up in FX first.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--warn);">
+      <div class="card-title">🏦 Central Bank Intervention</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--purple);letter-spacing:.04em;margin-bottom:8px;">↑↓ Direction set by CB intent</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;"><strong style="color:var(--text);">Direct FX purchases / sales.</strong> SNB's 1.20 CHF/EUR floor, BOJ yen interventions (2022), China's daily fix. Credibility determines effectiveness.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S2 · MARKET EVENTS EXPLORER ══ -->
+<div class="slide" id="s2">
+<div class="si top">
+  <div class="eyebrow">Section 1 · FX Drivers in Action</div>
+  <h2 class="slide-title">Global FX Events</h2>
+  <p class="slide-sub">Click an event — see which drivers fired and how currencies moved.</p>
+  <div class="toggle-row" id="ev-tabs"></div>
+  <div class="grid3" id="ev-cards" style="gap:12px;margin-bottom:12px;"></div>
+  <div class="anno" id="ev-chain" style="margin-bottom:12px;"></div>
+  <div class="ev-chart-wrap">
+    <div class="ev-chart-row">
+      <span class="card-title" id="ev-chart-lbl">FX Rate — Event Window</span>
+      <span style="font-size:10px;color:var(--text-subtle);">% change vs Day −1 baseline · window: Day −20 → +20</span>
+    </div>
+    <div style="position:relative;height:148px;"><canvas id="ev-chart"></canvas></div>
+    <div id="ev-chart-guide" style="margin-top:7px;font-size:11px;color:var(--text-muted);text-align:center;line-height:1.5;padding:4px 0;border-top:1px solid var(--border);"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S3 · CROSS RATE COMPUTATION ══ -->
+<div class="slide" id="s3">
+<div class="si top">
+  <div class="eyebrow">Section 1 · Cross Rates</div>
+  <h2 class="slide-title">Computing Cross Rates</h2>
+  <p class="slide-sub">Two methods — <strong>division</strong> (shared quote currency) or <strong>multiplication</strong> (bridge currency). Same logic, different arithmetic.</p>
+  <div class="grid2" style="gap:14px;align-items:start;margin-top:6px;">
+
+    <!-- ── EXAMPLE 1: Division ── -->
+    <div>
+      <div style="background:var(--teal);border-radius:8px 8px 0 0;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#fff;">Example 1 · Division</span>
+        <span style="font-size:10px;color:rgba(255,255,255,.8);">Shared quote: USD</span>
+      </div>
+      <div class="card" style="border-radius:0 0 8px 8px;border-top:none;padding:14px 16px;">
+        <!-- Step 0: Given rates (always visible) -->
+        <div id="cr0-s0">
+          <div class="card-title" style="margin-bottom:7px;">Given Market Quotes</div>
+          <table class="tbl" style="margin-bottom:10px;">
+            <tr><td style="font-weight:600;font-size:13px;">EUR / USD</td><td class="num" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy);">1.1200</td><td style="font-size:11px;color:var(--text-muted);">1 EUR = $1.12</td></tr>
+            <tr><td style="font-weight:600;font-size:13px;">GBP / USD</td><td class="num" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy);">1.2700</td><td style="font-size:11px;color:var(--text-muted);">1 GBP = $1.27</td></tr>
+          </table>
+          <div class="anno" style="font-size:12px;margin-bottom:10px;">Both rates quote <strong>USD</strong>. Dividing cancels USD and gives us EUR/GBP.</div>
+          <button class="sim-btn" id="cr0-btn" onclick="advCR(0)" style="width:100%;font-size:12px;">Step 2: Show Formula →</button>
+        </div>
+        <!-- Step 1: Formula -->
+        <div id="cr0-s1" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+          <div class="card-title" style="margin-bottom:6px;">Cross Rate Formula</div>
+          <div class="eq-wrap" style="padding:10px 14px;"><div id="eq-cr1-f"></div></div>
+          <div class="eq-wrap" style="padding:10px 14px;margin-top:6px;"><div id="eq-cr1-c"></div></div>
+        </div>
+        <!-- Step 2: Compare + Arb -->
+        <div id="cr0-s2" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+          <div class="card-title" style="margin-bottom:8px;">Step 3 — Market Quote vs Computed</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <div style="flex:1;border:2px solid var(--navy);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:var(--navy);letter-spacing:.07em;margin-bottom:3px;">COMPUTED CROSS RATE</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);">0.8819</div>
+              <div style="font-size:10px;color:var(--text-subtle);margin-top:2px;">what it should be</div>
+            </div>
+            <div style="display:flex;align-items:center;font-size:20px;color:var(--loss);font-weight:700;">≠</div>
+            <div style="flex:1;border:2px solid var(--warn);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.07em;margin-bottom:3px;">ACTUAL MARKET QUOTE</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--warn);">0.8740</div>
+              <div style="font-size:10px;color:var(--text-subtle);margin-top:2px;">what broker quotes</div>
+            </div>
+          </div>
+          <div style="background:rgba(21,128,61,0.07);border:1.5px solid rgba(21,128,61,.3);border-radius:8px;padding:10px 12px;">
+            <div style="font-size:10px;font-weight:700;color:var(--gain);letter-spacing:.07em;margin-bottom:5px;">⚡ ARBITRAGE OPPORTUNITY</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+              <span style="font-size:12px;color:var(--text-muted);">Gap: 0.8819 − 0.8740</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--loss);">79 pips</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;">
+              <span style="font-size:12px;color:var(--text-muted);">Profit on $10M notional</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--gain);">≈ $90,000</span>
+            </div>
+            <div style="border-top:1px solid rgba(21,128,61,.2);padding-top:7px;margin-top:2px;">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gain);margin-bottom:5px;">TRADE PATH · $1M notional</div>
+              <div style="font-size:10.5px;color:var(--text-muted);line-height:2;font-family:'JetBrains Mono',monospace;">
+                ① USD→GBP: $1,000,000 ÷ 1.2700 = <strong style="color:var(--text);">787,402 GBP</strong><br>
+                ② GBP→EUR: 787,402 ÷ 0.8740 = <strong style="color:var(--gain);">900,918 EUR</strong><br>
+                &nbsp;&nbsp;&nbsp;<span style="font-style:italic;color:var(--gain);font-size:9.5px;">↑ market gives MORE EUR per GBP than fair value</span><br>
+                ③ EUR→USD: 900,918 × 1.1200 = <strong style="color:var(--text);">$1,009,028</strong><br>
+                <strong style="color:var(--gain);font-size:11.5px;">Profit: +$9,028 &nbsp;(0.90% risk-free)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EXAMPLE 2: Multiplication ── -->
+    <div>
+      <div style="background:var(--navy);border-radius:8px 8px 0 0;padding:7px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#fff;">Example 2 · Multiplication</span>
+        <span style="font-size:10px;color:rgba(255,255,255,.8);">Bridge currency: USD</span>
+      </div>
+      <div class="card" style="border-radius:0 0 8px 8px;border-top:none;padding:14px 16px;">
+        <!-- Step 0: Given rates (always visible) -->
+        <div id="cr1-s0">
+          <div class="card-title" style="margin-bottom:7px;">Given Market Quotes</div>
+          <table class="tbl" style="margin-bottom:10px;">
+            <tr><td style="font-weight:600;font-size:13px;">GBP / USD</td><td class="num" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy);">1.2700</td><td style="font-size:11px;color:var(--text-muted);">1 GBP = $1.27</td></tr>
+            <tr><td style="font-weight:600;font-size:13px;">USD / JPY</td><td class="num" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy);">149.50</td><td style="font-size:11px;color:var(--text-muted);">1 USD = ¥149.50</td></tr>
+          </table>
+          <div class="anno" style="font-size:12px;margin-bottom:10px;"><strong>USD is the bridge</strong>: GBP/USD × USD/JPY — the USD cancels, leaving GBP/JPY.</div>
+          <button class="sim-btn" id="cr1-btn" onclick="advCR(1)" style="width:100%;font-size:12px;">Step 2: Show Formula →</button>
+        </div>
+        <!-- Step 1: Formula -->
+        <div id="cr1-s1" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+          <div class="card-title" style="margin-bottom:6px;">Cross Rate Formula</div>
+          <div class="eq-wrap" style="padding:10px 14px;"><div id="eq-cr2-f"></div></div>
+          <div class="eq-wrap" style="padding:10px 14px;margin-top:6px;"><div id="eq-cr2-c"></div></div>
+        </div>
+        <!-- Step 2: Compare + Arb -->
+        <div id="cr1-s2" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+          <div class="card-title" style="margin-bottom:8px;">Step 3 — Market Quote vs Computed</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <div style="flex:1;border:2px solid var(--navy);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:var(--navy);letter-spacing:.07em;margin-bottom:3px;">COMPUTED CROSS RATE</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--navy);">189.87</div>
+              <div style="font-size:10px;color:var(--text-subtle);margin-top:2px;">what it should be</div>
+            </div>
+            <div style="display:flex;align-items:center;font-size:20px;color:var(--loss);font-weight:700;">≠</div>
+            <div style="flex:1;border:2px solid var(--warn);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:9px;font-weight:700;color:var(--warn);letter-spacing:.07em;margin-bottom:3px;">ACTUAL MARKET QUOTE</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--warn);">188.20</div>
+              <div style="font-size:10px;color:var(--text-subtle);margin-top:2px;">what broker quotes</div>
+            </div>
+          </div>
+          <div style="background:rgba(21,128,61,0.07);border:1.5px solid rgba(21,128,61,.3);border-radius:8px;padding:10px 12px;">
+            <div style="font-size:10px;font-weight:700;color:var(--gain);letter-spacing:.07em;margin-bottom:5px;">⚡ ARBITRAGE OPPORTUNITY</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+              <span style="font-size:12px;color:var(--text-muted);">Gap: 189.87 − 188.20</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--loss);">167 pips</span>
+            </div>
+            <div style="border-top:1px solid rgba(21,128,61,.2);padding-top:7px;margin-top:2px;">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gain);margin-bottom:5px;">TRADE PATH · $1M notional</div>
+              <div style="font-size:10.5px;color:var(--text-muted);line-height:2;font-family:'JetBrains Mono',monospace;">
+                ① USD→JPY: $1,000,000 × 149.50 = <strong style="color:var(--text);">149,500,000 JPY</strong><br>
+                ② JPY→GBP: 149,500,000 ÷ 188.20 = <strong style="color:var(--gain);">794,367 GBP</strong><br>
+                &nbsp;&nbsp;&nbsp;<span style="font-style:italic;color:var(--gain);font-size:9.5px;">↑ market gives MORE GBP per JPY than fair value</span><br>
+                ③ GBP→USD: 794,367 × 1.2700 = <strong style="color:var(--text);">$1,008,846</strong><br>
+                <strong style="color:var(--gain);font-size:11.5px;">Profit: +$8,846 &nbsp;(0.88% risk-free) → ≈ $88,000 on $10M</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid2 -->
+</div>
+</div>
+
+<!-- ══ S4 · MISPRICING FACTOR ══ -->
+<div class="slide" id="s4">
+<div class="si top">
+  <div class="eyebrow">Section 1 · Cross Rate Analysis</div>
+  <h2 class="slide-title">Mispricing Factor</h2>
+  <p class="slide-sub">Divide the <strong>Implied Rate</strong> (what the math says it should be) by the <strong>Market Quote</strong> (what the broker charges). A ratio above 1 means the market is mispriced — arbitrage profit exists.</p>
+
+  <!-- Formula -->
+  <div class="eq-wrap" style="margin-bottom:14px;">
+    <div id="eq-mf-formula"></div>
+  </div>
+
+  <div class="grid2" style="gap:12px;margin-bottom:14px;">
+    <div class="card" style="border-left:4px solid var(--teal);">
+      <div class="card-title">📐 Decision Rule</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(21,128,61,0.08);border-radius:6px;border-left:3px solid var(--gain);">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--gain);min-width:36px;">&gt; 1</span>
+          <span style="font-size:13px;color:var(--text-muted);">Market rate is <strong style="color:var(--text);">too cheap</strong> → arbitrage opportunity ⚡</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:6px;border-left:3px solid var(--border);">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--text-subtle);min-width:36px;">= 1</span>
+          <span style="font-size:13px;color:var(--text-muted);">Market is <strong style="color:var(--text);">fairly priced</strong> → no arbitrage</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(220,38,38,0.07);border-radius:6px;border-left:3px solid var(--loss);">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--loss);min-width:36px;">&lt; 1</span>
+          <span style="font-size:13px;color:var(--text-muted);">Market rate is <strong style="color:var(--text);">too expensive</strong> → reverse the trade</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold);">
+      <div class="card-title">🔢 S3 Example 1 Applied</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-top:4px;">
+        <div style="margin-bottom:6px;"><span style="color:var(--text-subtle);">Implied EUR/GBP:</span> <strong style="font-family:'JetBrains Mono',monospace;color:var(--text);">1.1200 ÷ 1.2700 = 0.8819</strong></div>
+        <div style="margin-bottom:6px;"><span style="color:var(--text-subtle);">Market Quote:</span> <strong style="font-family:'JetBrains Mono',monospace;color:var(--text);">0.8740</strong></div>
+        <div style="background:rgba(21,128,61,0.08);border-radius:6px;padding:8px 10px;border-left:3px solid var(--gain);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--gain);">0.8819 ÷ 0.8740 = <span style="font-size:20px;">1.0090</span></div>
+          <div style="font-size:11px;color:var(--gain);margin-top:3px;">Ratio &gt; 1 → arbitrage exists · +0.90%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-title">🔢 Mispricing Calculator</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Implied (Computed)</div>
+        <input type="number" id="mf-computed" value="0.8819" step="0.0001" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:15px;font-family:'JetBrains Mono',monospace;color:var(--text);">
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Market Quote</div>
+        <input type="number" id="mf-market" value="0.8740" step="0.0001" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:15px;font-family:'JetBrains Mono',monospace;color:var(--text);">
+      </div>
+      <button onclick="calcMF()" style="padding:8px 18px;background:var(--navy);color:#FFF;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Calculate →</button>
+    </div>
+    <div id="mf-result" style="display:none;"></div>
+  </div>
+
+  <!-- Threshold table -->
+  <div class="card">
+    <div class="card-title">⚡ Break-Even Threshold — Typical Bid-Ask Spreads</div>
+    <table class="tbl">
+      <thead><tr><th>Currency Pair</th><th class="num">Typical Spread (pips)</th><th>Profitable Arb If Gap &gt;</th><th>Signal</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:'JetBrains Mono',monospace;">EUR/USD</td><td class="num">0.5 – 1.5</td><td>1.5 pips</td><td><span class="tag tag-ok">Most accessible</span></td></tr>
+        <tr><td style="font-family:'JetBrains Mono',monospace;">GBP/USD</td><td class="num">1 – 2</td><td>2 pips</td><td><span class="tag tag-ok">Liquid</span></td></tr>
+        <tr><td style="font-family:'JetBrains Mono',monospace;">EUR/GBP</td><td class="num">1 – 2.5</td><td>2.5 pips</td><td><span class="tag tag-warn">Moderate</span></td></tr>
+        <tr><td style="font-family:'JetBrains Mono',monospace;">GBP/JPY</td><td class="num">2 – 5</td><td>5 pips</td><td><span class="tag tag-warn">Wider spreads</span></td></tr>
+        <tr><td style="font-family:'JetBrains Mono',monospace;">EM cross pairs</td><td class="num">10 – 50+</td><td>50+ pips</td><td><span class="tag tag-bad">High bar</span></td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px;color:var(--text-subtle);margin-top:8px;">Pre-loaded with S3 Example 1 values: Implied EUR/GBP = 0.8819 ÷ Market 0.8740 → Ratio = 1.0090 &gt; 1 → 79-pip arbitrage gap.</p>
+  </div>
+</div>
+</div>
+
+<!-- ══ S5 · FX CARTEL – THE CHATROOM ══ -->
+<div class="slide" id="s5">
+<div class="si top">
+  <div class="eyebrow">Section 2 · FX Market Manipulation</div>
+  <h2 class="slide-title">The Cartel</h2>
+  <p class="slide-sub">2007–2013 · Barclays, JPMorgan, Citi, UBS, RBS · WM/Reuters 4pm Fix</p>
+  <div class="grid2" style="gap:16px;align-items:start;">
+    <!-- Chat -->
+    <div class="cartel-panel">
+      <div class="cartel-header">🔒 <span>THE CARTEL</span> &nbsp;·&nbsp; Bloomberg Chat &nbsp;·&nbsp; 15:52 UTC</div>
+      <div class="cartel-msgs">
+        <div class="cmsg"><span class="cmsg-handle">BARCLAYS_FX</span><span class="cmsg-text">who's got the fix today? need to know what <em>direction</em> we're pushing</span><span class="cmsg-time">15:52</span></div>
+        <div class="cmsg"><span class="cmsg-handle">JPM_DESK</span><span class="cmsg-text">we're <em>net long EUR</em>. want it higher. 200M to offload at fix</span><span class="cmsg-time">15:53</span></div>
+        <div class="cmsg"><span class="cmsg-handle">CITI_TRADER</span><span class="cmsg-text">same here. <em>don't sell</em> before 4pm — hold until the window opens</span><span class="cmsg-time">15:54</span></div>
+        <div class="cmsg"><span class="cmsg-handle">UBS_CH</span><span class="cmsg-text"><em>"if you ain't cheating, you ain't trying"</em></span><span class="cmsg-time">15:55</span></div>
+        <div class="cmsg"><span class="cmsg-handle">JPM_DESK</span><span class="cmsg-text">ok — <em>flood the fix</em> at 15:59:30. all in</span><span class="cmsg-time">15:57</span></div>
+        <div class="cmsg"><span class="cmsg-handle">BARCLAYS_FX</span><span class="cmsg-text">done. banged it. <em>pocketed the spread.</em> clients will never know</span><span class="cmsg-time">16:01</span></div>
+      </div>
+    </div>
+    <!-- Highlights -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="border-left:4px solid var(--loss);">
+        <div class="card-title">What They Did</div>
+        <p style="font-size:15px;color:var(--text-muted);line-height:1.8;">Shared client order flow before the fix, then <strong style="color:var(--text);">coordinated buy/sell pressure</strong> to move the benchmark rate — at their clients' expense.</p>
+      </div>
+      <div class="grid2" style="gap:10px;">
+        <div class="stat-tile"><div class="stat-lbl">Market Size</div><div class="stat-val">$6.6T</div><div class="stat-note">daily FX volume</div></div>
+        <div class="stat-tile"><div class="stat-lbl">Active</div><div class="stat-val">6 yrs</div><div class="stat-note">2007 – 2013</div></div>
+        <div class="stat-tile"><div class="stat-lbl">Total Fines</div><div class="stat-val loss">≈$10B</div><div class="stat-note">5 major banks</div></div>
+        <div class="stat-tile"><div class="stat-lbl">Source</div><div class="stat-val" style="font-size:16px;">DOJ / FCA</div><div class="stat-note">actual chat logs</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S6 · FX CARTEL – MECHANISM & FINES ══ -->
+<div class="slide" id="s6">
+<div class="si top">
+  <div class="eyebrow">Section 2 · FX Market Manipulation</div>
+  <h2 class="slide-title">How They Rigged It</h2>
+  <div class="flow" style="margin-bottom:20px;">
+    <div class="flow-step" style="border-top:3px solid var(--teal);">
+      <div class="flow-num">Step 1</div>
+      <div class="flow-icon">📥</div>
+      <div class="flow-txt"><strong style="color:var(--text);">Accumulate</strong><br>Collect client orders before fix window</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-top:3px solid var(--warn);">
+      <div class="flow-num">Step 2</div>
+      <div class="flow-icon">💬</div>
+      <div class="flow-txt"><strong style="color:var(--text);">Share Intel</strong><br>Reveal net position across banks in chat room</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-top:3px solid var(--loss);">
+      <div class="flow-num">Step 3</div>
+      <div class="flow-icon">🌊</div>
+      <div class="flow-txt"><strong style="color:var(--text);">Flood the Fix</strong><br>Coordinate surge at 15:59:30 UTC</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-top:3px solid var(--gain);">
+      <div class="flow-num">Step 4</div>
+      <div class="flow-icon">💰</div>
+      <div class="flow-txt"><strong style="color:var(--text);">Pocket Spread</strong><br>Execute clients at rigged rate, keep difference</div>
+    </div>
+  </div>
+  <div class="grid2" style="gap:16px;align-items:start;">
+    <table class="tbl">
+      <thead><tr><th>Bank</th><th class="num">Fine (USD)</th><th>Regulator</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Barclays</strong></td><td class="num loss">$2.4B</td><td style="font-size:12px;color:var(--text-muted);">DOJ + FCA + NY DFS</td></tr>
+        <tr><td><strong>Citigroup</strong></td><td class="num loss">$1.3B</td><td style="font-size:12px;color:var(--text-muted);">DOJ + CFTC</td></tr>
+        <tr><td><strong>JPMorgan</strong></td><td class="num loss">$1.0B</td><td style="font-size:12px;color:var(--text-muted);">DOJ + Fed + OCC</td></tr>
+        <tr><td><strong>UBS</strong></td><td class="num loss">$800M</td><td style="font-size:12px;color:var(--text-muted);">DOJ + CFTC + FINMA</td></tr>
+        <tr><td><strong>RBS</strong></td><td class="num loss">$669M</td><td style="font-size:12px;color:var(--text-muted);">DOJ + CFTC</td></tr>
+        <tr style="background:var(--surface-2);"><td><strong>Total</strong></td><td class="num" style="font-weight:700;color:var(--navy);">≈$10B</td><td></td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card" style="border-left:4px solid var(--gain);">
+        <div class="card-title">What Changed</div>
+        <ul style="font-size:14px;color:var(--text-muted);line-height:2;padding-left:16px;">
+          <li>Fix window widened to 5 minutes</li>
+          <li>Electronic audit trails required</li>
+          <li>No cross-bank coordination in chats</li>
+          <li>Global FX Code of Conduct (2017)</li>
+        </ul>
+      </div>
+      <div class="anno"><strong>Key insight:</strong> Even a $6.6T/day market can be manipulated when information is concentrated. Arbitrage is the mechanism that fights back — which is exactly what we study next.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S7 · TRIANGULAR ARB — THE IDEA ══ -->
+<div class="slide" id="s7">
+<div class="si">
+  <div class="eyebrow">Section 3 · FX Arbitrage</div>
+  <h2 class="slide-title">The Idea Behind Triangular Arbitrage</h2>
+  <div class="grid2" style="gap:28px;align-items:center;margin-top:4px;">
+    <div>
+      <p class="arb-big-stmt">Exchange rates form a triangle.<br>All three sides must be consistent.</p>
+      <p style="font-size:16px;color:var(--text-muted);line-height:1.8;margin:16px 0;">If you convert USD → EUR → GBP → USD and end up with <strong style="color:var(--gain);">more than you started</strong>, the rates are inconsistent — and that gap is <strong style="color:var(--navy);">risk-free profit</strong>.</p>
+      <div class="arb-cond">f₁ × f₂ × f₃ = 1.0000</div>
+      <p style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-top:12px;">When this product ≠ 1.0000, one of the three quoted rates is out of line. You exploit it by going around the triangle in the profitable direction.</p>
+      <!-- WHY MULTIPLICATION? -->
+      <div style="margin-top:12px;background:rgba(200,168,75,0.08);border:1px solid rgba(200,168,75,0.3);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">❓ Why multiply? The next slide divides…</div>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:8px;">Each <strong style="color:var(--text);">fᵢ</strong> is the <em>effective multiplier</em> for that leg — NOT always the raw quote. When you <strong>divide</strong> by a rate in Step-by-Step math, that is mathematically identical to <strong>multiplying</strong> by 1/rate.</p>
+        <table class="tbl" style="font-size:12px;">
+          <thead><tr><th>Leg (path)</th><th>Raw Quote</th><th>Operation</th><th>Effective fᵢ</th></tr></thead>
+          <tbody>
+            <tr><td>USD → EUR</td><td style="font-family:'JetBrains Mono',monospace;">EUR/USD = 1.12</td><td style="color:var(--teal);">÷ 1.12</td><td style="font-family:'JetBrains Mono',monospace;color:var(--navy);">f₁ = 1/1.12</td></tr>
+            <tr><td>EUR → GBP</td><td style="font-family:'JetBrains Mono',monospace;">EUR/GBP = 0.874</td><td style="color:var(--teal);">÷ 0.874</td><td style="font-family:'JetBrains Mono',monospace;color:var(--navy);">f₂ = 1/0.874</td></tr>
+            <tr><td>GBP → USD</td><td style="font-family:'JetBrains Mono',monospace;">GBP/USD = 1.27</td><td style="color:var(--gain);">× 1.27</td><td style="font-family:'JetBrains Mono',monospace;color:var(--navy);">f₃ = 1.27</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.6;">The formula <strong>f₁ × f₂ × f₃ = 1</strong> is just saying: multiply <em>all the effective multipliers</em> together — divisions already baked in. No-arb ↔ you end up where you started.</p>
+      </div>
+      <div class="anno" style="margin-top:10px;font-size:13px;"><strong>No forecasting needed.</strong> No credit risk. You start and end in the same currency — the profit is locked in at execution.</div>
+    </div>
+    <div>
+      <svg viewBox="0 0 280 260" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:300px;display:block;margin:0 auto;">
+        <defs>
+          <marker id="ah1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#C8A84B"/></marker>
+          <marker id="ah2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0891B2"/></marker>
+          <marker id="ah3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#15803D"/></marker>
+        </defs>
+        <polygon points="140,22 262,218 18,218" stroke="#C8D8EC" stroke-width="1.5" fill="rgba(15,42,92,0.03)"/>
+        <line x1="140" y1="44" x2="250" y2="208" stroke="#C8A84B" stroke-width="2.5" marker-end="url(#ah1)"/>
+        <line x1="250" y1="208" x2="30" y2="208" stroke="#0891B2" stroke-width="2.5" marker-end="url(#ah2)"/>
+        <line x1="30" y1="208" x2="130" y2="42" stroke="#15803D" stroke-width="2.5" marker-end="url(#ah3)"/>
+        <circle cx="140" cy="22" r="22" fill="#0F2A5C" stroke="#C8A84B" stroke-width="2"/>
+        <text x="140" y="27" text-anchor="middle" fill="#FFF" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">USD</text>
+        <circle cx="262" cy="218" r="22" fill="#0F2A5C" stroke="#C8A84B" stroke-width="2"/>
+        <text x="262" y="223" text-anchor="middle" fill="#FFF" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">EUR</text>
+        <circle cx="18" cy="218" r="22" fill="#0F2A5C" stroke="#C8A84B" stroke-width="2"/>
+        <text x="18" y="223" text-anchor="middle" fill="#FFF" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">GBP</text>
+        <text x="212" y="126" text-anchor="middle" fill="#C8A84B" font-size="11" font-weight="700" font-family="JetBrains Mono,monospace">f₁</text>
+        <text x="140" y="236" text-anchor="middle" fill="#0891B2" font-size="11" font-weight="700" font-family="JetBrains Mono,monospace">f₂</text>
+        <text x="66" y="126" text-anchor="middle" fill="#15803D" font-size="11" font-weight="700" font-family="JetBrains Mono,monospace">f₃</text>
+        <text x="140" y="132" text-anchor="middle" fill="#3A5278" font-size="12" font-family="Inter,sans-serif">if f₁×f₂×f₃ ≠ 1</text>
+        <text x="140" y="150" text-anchor="middle" fill="#15803D" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">→ free profit</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S8 · THE MATH ══ -->
+<div class="slide" id="s8">
+<div class="si top">
+  <div class="eyebrow">Section 3 · FX Arbitrage</div>
+  <h2 class="slide-title">Worked Example — Step by Step</h2>
+  <p class="slide-sub">Rates: EUR/USD = 1.1200 &nbsp;·&nbsp; GBP/USD = 1.2700 &nbsp;·&nbsp; EUR/GBP<sub>mkt</sub> = 0.8740 &nbsp;·&nbsp; Notional: $1,000,000 &nbsp;·&nbsp; Path: <strong>USD → GBP → EUR → USD</strong></p>
+  <div class="grid2" style="gap:16px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card" style="border-left:4px solid var(--teal);">
+        <div class="card-title">Step 1 — USD → GBP &nbsp;<span style="font-size:10px;font-weight:400;color:var(--text-subtle);">sell USD, buy cheap GBP</span></div>
+        <div class="eq-wrap"><div id="eq1"></div></div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gold);">
+        <div class="card-title">Step 2 — GBP → EUR &nbsp;<span style="font-size:10px;font-weight:400;color:var(--gain);">market gives MORE EUR than fair value</span></div>
+        <div class="eq-wrap"><div id="eq2"></div></div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--gain);">
+        <div class="card-title">Step 3 — EUR → USD &nbsp;<span style="font-size:10px;font-weight:400;color:var(--text-subtle);">convert back at EUR/USD</span></div>
+        <div class="eq-wrap"><div id="eq3"></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="border-top:4px solid var(--navy);">
+        <div class="card-title">Why the Opportunity Exists</div>
+        <div class="eq-wrap"><div id="eq-product"></div></div>
+        <p style="font-size:14px;color:var(--text-muted);margin-top:8px;line-height:1.7;">The three rates are inconsistent: their product is <strong class="gain">1.0090</strong> — not 1.0000. That 0.90% gap is the arbitrage profit.</p>
+      </div>
+      <div class="stat-tile" style="border-left:4px solid var(--gain);">
+        <div class="stat-lbl">Net Profit</div>
+        <div class="stat-val gain" style="font-size:clamp(30px,4vw,52px);">+$9,028</div>
+        <div class="stat-note">On $1M · zero market risk · seconds to execute</div>
+      </div>
+      <div class="anno" style="font-size:13px;"><strong>Self-correcting:</strong> The trade itself closes the gap — buying EUR bids up EUR/USD, selling EUR/GBP pushes it toward 0.8819. Arb opportunities vanish within milliseconds in electronic markets.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S9 · LIVE ARBITRAGE SIMULATOR ══ -->
+<div class="slide" id="s9">
+<div class="si top">
+  <div class="eyebrow">Section 3 · FX Arbitrage</div>
+  <h2 class="slide-title">Live Arbitrage Simulator</h2>
+  <p class="slide-sub">Adjust rates manually or use <em>Inject Arb</em> to create a gap — watch the P&amp;L respond.</p>
+  <div class="grid2" style="gap:16px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">Currencies</div>
+        <div class="grid3" style="gap:8px;margin-bottom:10px;">
+          <div><div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;">A</div><select class="sim-select" id="sim-a" onchange="simLoad()"></select></div>
+          <div><div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;">B</div><select class="sim-select" id="sim-b" onchange="simLoad()"></select></div>
+          <div><div style="font-size:11px;color:var(--text-subtle);margin-bottom:4px;">C</div><select class="sim-select" id="sim-c" onchange="simLoad()"></select></div>
+        </div>
+        <div id="presetRow"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Exchange Rates</div>
+        <div id="rateRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="sim-btn inject" onclick="simInjectArb()">⚡ Inject Arb</button>
+          <button class="sim-btn" onclick="simReset()">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="border-top:4px solid var(--navy);">
+        <div class="card-title">Product &nbsp;<span id="arb-badge" class="tag tag-warn">—</span></div>
+        <div class="stat-val" id="arb-product" style="font-size:clamp(28px,3.5vw,46px);margin:8px 0;">—</div>
+        <div style="font-size:13px;color:var(--text-muted);">Target: <strong style="font-family:'JetBrains Mono',monospace;color:var(--navy);">1.0000</strong> &nbsp; Gap: <span id="arb-dev" style="font-family:'JetBrains Mono',monospace;"></span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">P&amp;L on $1,000,000</div>
+        <div class="stat-val" id="sim-end" style="font-size:clamp(22px,3vw,38px);margin:6px 0;">—</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:clamp(14px,1.8vw,22px);font-weight:700;margin-bottom:6px;" id="sim-pnl">—</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="sim-note"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Trade Path</div>
+        <div id="sim-path" style="font-size:13px;color:var(--text-muted);line-height:2.2;font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ S10 · WHAT WE LEARNED ══ -->
+<div class="slide" id="s10">
+<div class="si top">
+  <div class="eyebrow">Lecture 4 · Summary</div>
+  <h2 class="slide-title">What We Learned</h2>
+  <p class="slide-sub">Six forces, one ratio, one criminal cartel, and a risk-free profit machine — here's the full picture.</p>
+
+  <div class="grid2" style="gap:14px;margin-bottom:14px;">
+    <!-- Section 1 recap -->
+    <div class="card" style="border-top:4px solid var(--teal);">
+      <div class="card-title" style="color:var(--teal);">🌍 Section 1 · Cross Rate Analysis</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:9px;">
+        <div style="padding:8px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--teal);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:3px;">6 FX Drivers</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Interest rates · Inflation · GDP · Trade balance · Political stability · Speculation</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--teal);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:3px;">Cross Rate Formula</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">EUR/GBP = EUR/USD ÷ GBP/USD &nbsp;→ eliminates the USD middleman</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--teal);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:3px;">Mispricing Ratio</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Implied ÷ Market &nbsp;<strong style="font-family:'JetBrains Mono',monospace;">&gt; 1</strong> = arb · <strong style="font-family:'JetBrains Mono',monospace;">= 1</strong> = fair · <strong style="font-family:'JetBrains Mono',monospace;">&lt; 1</strong> = reversed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2 recap -->
+    <div class="card" style="border-top:4px solid var(--loss);">
+      <div class="card-title" style="color:var(--loss);">🚨 Section 2 · FX Market Manipulation</div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:9px;">
+        <div style="padding:8px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--loss);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--loss);margin-bottom:3px;">The FX Cartel</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Barclays · JPMorgan · Citi · UBS · RBS coordinated the 4pm WM/Reuters Fix · 2007–2013</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--loss);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--loss);margin-bottom:3px;">The Mechanism</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">Share client orders → coordinate direction → flood the fix window → pocket the spread</div>
+        </div>
+        <div style="padding:8px 12px;background:rgba(220,38,38,0.07);border-radius:7px;border-left:3px solid var(--loss);">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--loss);margin-bottom:3px;">Consequences</div>
+          <div style="font-size:12.5px;color:var(--text-muted);">≈ <strong style="color:var(--text);">$10B in fines</strong> · DOJ + FCA · Guilty pleas · Individual prosecutions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3 recap — full width -->
+  <div class="card" style="border-top:4px solid var(--gain);">
+    <div class="card-title" style="color:var(--gain);">⚡ Section 3 · Triangular Arbitrage</div>
+    <div class="grid3" style="gap:12px;margin-top:10px;">
+      <div style="padding:10px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--gain);">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gain);margin-bottom:4px;">The Logic</div>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.7;">Three currencies · Market quote ≠ Implied rate · Trade the gap before it closes</div>
+      </div>
+      <div style="padding:10px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--gain);">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gain);margin-bottom:4px;">The Math</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;font-family:'JetBrains Mono',monospace;">$1M ÷ 1.27 = 787K GBP<br>÷ 0.874 = 901K EUR<br>× 1.12 = $1,009,028<br><strong style="color:var(--gain);">Profit: +$9,028</strong></div>
+      </div>
+      <div style="padding:10px 12px;background:var(--surface-2);border-radius:7px;border-left:3px solid var(--gain);">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gain);margin-bottom:4px;">Self-Correcting</div>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.7;">Arbitrage trades immediately push prices back to equilibrium — gaps last milliseconds, not minutes</div>
+      </div>
+    </div>
+    <!-- Key takeaway -->
+    <div style="margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(15,42,92,0.07),rgba(200,168,75,0.07));border:1.5px solid var(--gold);border-radius:10px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;">The Big Idea</div>
+      <div style="font-size:15px;color:var(--text-muted);line-height:1.7;">FX markets are efficient <em>because</em> arbitrageurs make them so. Every mispricing signals a profit — and the act of capturing that profit corrects the price.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- /deck -->
+
+<nav class="nav">
+  <button class="nav-btn" id="btn-prev" onclick="go(-1)">&#8592;</button>
+  <div class="nav-dots" id="nav-dots"></div>
+  <span class="nav-count" id="nav-count">1/11</span>
+  <button class="nav-btn" id="btn-next" onclick="go(1)">&#8594;</button>
+</nav>
+
+<script>
+// ── NAV ─────────────────────────────────────────────────────────────
+const slides = Array.from(document.querySelectorAll('.slide'));
+const N = slides.length;
+let cur = 0;
+// c1=teal(drivers) c2=red(cartel) c3=green(arb) blank=title
+const DOT_C = ['','c1','c1','c1','c1','c2','c2','c3','c3','c3',''];
+const SLIDE_LABELS = ['Title','FX Drivers','Market Events','Cross Rates','Mispricing Factor','FX Cartel – Chat','FX Cartel – Fines','Arb Concept','Arb Math','Arb Simulator','What We Learned'];
+const dotsEl = document.getElementById('nav-dots');
+slides.forEach((_,i) => {
+  const d = document.createElement('button');
+  d.className = 'nav-dot' + (DOT_C[i]?' '+DOT_C[i]:'') + (i===0?' active':'');
+  d.title = SLIDE_LABELS[i]||'';
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+function goTo(idx){
+  if(idx<0||idx>=N) return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('exit-left');
+  setTimeout(()=>slides[cur].classList.remove('exit-left'),400);
+  cur = idx;
+  slides[cur].classList.add('active');
+  Array.from(dotsEl.children).forEach((d,i)=>{
+    d.className = 'nav-dot'+(DOT_C[i]?' '+DOT_C[i]:'')+(i===cur?' active':i<cur?' done':'');
+  });
+  document.getElementById('nav-count').textContent=(cur+1)+'/'+N;
+  document.getElementById('pgBar').style.width=((cur+1)/N*100)+'%';
+  document.getElementById('btn-prev').disabled=cur===0;
+  document.getElementById('btn-next').disabled=cur===N-1;
+  onEnter(cur);
+}
+function go(d){goTo(cur+d);}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') go(-1);
+});
+function exportPDF(){
+  slides.forEach(s=>{s.style.opacity='1';s.style.transform='none';s.style.position='relative';s.style.pointerEvents='auto';});
+  window.print();
+  setTimeout(()=>{slides.forEach(s=>{s.style.opacity='';s.style.transform='';s.style.position='';s.style.pointerEvents='';});goTo(cur);},1000);
+}
+
+// ── EVENTS DATA ──────────────────────────────────────────────────────
+const EVENTS = [
+  {id:'covid',label:'🦠 COVID-19 (2020)',cards:[
+    {t:'What Happened',b:'March 2020: global shutdown fear triggers the largest single-week USD surge since 2008. DXY +9% in 10 days.'},
+    {t:'FX Impact',b:'USD/JPY fell 112→102 (yen strengthened as carry unwind). EUR/USD dipped then rebounded as Fed restored USD liquidity.'},
+    {t:'Key Drivers',b:'<span class="tag tag-bad">Safe Haven</span> <span class="tag tag-warn">Carry Unwind</span> <span class="tag tag-ok">CB Intervention</span>'}
+  ],chain:'Fed emergency QE → unlimited swap lines with 9 central banks → USD liquidity restored → USD weakened vs EM through late 2020.',
+  fx:{label:'JPY vs USD — Yen surges on safe-haven demand (COVID-19)',shock:0.09,vol:0.008,seed:2020,read:'📈 Rising line = <strong>JPY strengthens</strong> vs USD (yen appreciates)'}},
+  {id:'taper',label:'📉 Taper Tantrum (2013)',cards:[
+    {t:'What Happened',b:'May 2013: Bernanke hints at tapering QE. EM currencies collapse within days. Indian rupee −15%, Indonesian rupiah −14%.'},
+    {t:'FX Impact',b:'USD strength across the board. Capital fled EM to capture rising US yields — classic interest rate differential trade.'},
+    {t:'Key Drivers',b:'<span class="tag tag-bad">Rate Differential</span> <span class="tag tag-warn">Capital Flight</span> <span class="tag tag-ok">CB Reaction</span>'}
+  ],chain:'Fed taper signal → US yield spike → yield differential widens → capital outflow from EM → EM currencies crash → EM central banks raise rates → partial stabilization.',
+  fx:{label:'INR vs USD — Rupee collapses on capital flight (Taper Tantrum)',shock:-0.15,vol:0.007,seed:2013,read:'📉 Falling line = <strong>INR weakens</strong> vs USD (rupee depreciates)'}},
+  {id:'snb',label:'🏔️ SNB Black Swan (2015)',cards:[
+    {t:'What Happened',b:'Jan 15, 2015: SNB removes 1.20 EUR/CHF floor without warning. CHF appreciates 40% in minutes — largest single-day G10 move ever.'},
+    {t:'FX Impact',b:'EUR/CHF: 1.20 → 0.86 in minutes. FX brokers went insolvent. FXCM needed $300M emergency bailout.'},
+    {t:'Key Drivers',b:'<span class="tag tag-bad">CB Policy Reversal</span> <span class="tag tag-warn">Safe Haven</span> <span class="tag tag-ok">ECB QE Anticipation</span>'}
+  ],chain:'SNB held EUR/CHF at 1.20 for 3+ years → unsustainable vs ECB QE → surprise removal → CHF exploded → SNB moved to −0.75% to deter CHF inflows.',
+  fx:{label:'CHF vs EUR — Franc explodes as SNB removes floor',shock:0.30,vol:0.005,seed:2015,read:'📈 Rising line = <strong>CHF strengthens</strong> vs EUR (franc appreciates massively)'}},
+  {id:'brexit',label:'🇬🇧 Brexit Vote (2016)',cards:[
+    {t:'What Happened',b:'June 23, 2016: UK votes 52% to Leave. GBP/USD falls 1.50 → 1.33 overnight — a 10% flash crash.'},
+    {t:'FX Impact',b:'GBP worst-performing G10 currency in 2016. EUR also weakened on contagion risk. USD and JPY strengthened on safe-haven demand.'},
+    {t:'Key Drivers',b:'<span class="tag tag-bad">Political Risk</span> <span class="tag tag-warn">Fiscal Uncertainty</span> <span class="tag tag-ok">Safe Haven Flows</span>'}
+  ],chain:'Brexit vote → GBP crash → BOE cuts to 0.25% → QE restarted → GBP stabilizes but trades at structural discount reflecting trade uncertainty.',
+  fx:{label:'GBP vs USD — Pound crashes overnight on Brexit result',shock:-0.11,vol:0.009,seed:2016,read:'📉 Falling line = <strong>GBP weakens</strong> vs USD (pound depreciates)'}},
+  {id:'yen24',label:'🇯🇵 Yen Carry (2024)',cards:[
+    {t:'What Happened',b:'July–August 2024: BOJ hikes unexpectedly. USD/JPY falls 160→142 in 3 weeks, triggering a global equity selloff.'},
+    {t:'FX Impact',b:'JPY +12% vs USD in weeks. AUD, MXN (carry favorites) fell sharply. VIX spiked to 65 intraday on Aug 5.'},
+    {t:'Key Drivers',b:'<span class="tag tag-bad">Carry Unwind</span> <span class="tag tag-warn">Rate Differential</span> <span class="tag tag-ok">CB Surprise</span>'}
+  ],chain:'BOJ hike surprise → rate differential narrows → $4T carry trade closes → JPY shorts covered → USD/JPY plunges → EM and risk assets sold to fund JPY repayment.',
+  fx:{label:'JPY vs USD — Yen surges as $4T carry trade unwinds (2024)',shock:0.12,vol:0.007,seed:2024,read:'📈 Rising line = <strong>JPY strengthens</strong> vs USD (carry trade unwinds)'}}
+];
+let curEv='covid';
+function buildEvTabs(){
+  const c=document.getElementById('ev-tabs');c.innerHTML='';
+  EVENTS.forEach(ev=>{
+    const b=document.createElement('button');
+    b.className='tog'+(ev.id===curEv?' active':'');
+    b.textContent=ev.label;b.onclick=()=>loadEv(ev.id);c.appendChild(b);
+  });
+}
+function loadEv(id){
+  curEv=id;const ev=EVENTS.find(e=>e.id===id);
+  document.querySelectorAll('#ev-tabs .tog').forEach(b=>b.classList.toggle('active',b.textContent===ev.label));
+  document.getElementById('ev-cards').innerHTML=ev.cards.map(c=>`<div class="card"><div class="card-title">${c.t}</div><p style="font-size:14px;color:var(--text-muted);line-height:1.75;">${c.b}</p></div>`).join('');
+  document.getElementById('ev-chain').innerHTML=`<strong>Transmission chain:</strong> ${ev.chain}`;
+  updateEvChart(id);
+  const guide=document.getElementById('ev-chart-guide');
+  if(guide&&ev.fx&&ev.fx.read){
+    guide.innerHTML=`<span style="color:var(--text-subtle);margin-right:6px;">How to read:</span>${ev.fx.read} &nbsp;·&nbsp; <span style="color:var(--text-subtle);">x-axis = days relative to event · y-axis = % change vs Day −1</span>`;
+  }
+}
+
+// ── SIMULATOR ────────────────────────────────────────────────────────
+const CCYS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','MXN','BRL','SGD','CNY'];
+const RATE_USD={EUR:1.120,GBP:1.272,JPY:0.00680,CHF:1.115,CAD:0.741,AUD:0.645,NZD:0.595,MXN:0.0589,BRL:0.198,SGD:0.742,CNY:0.138};
+const PRESETS=[{label:'USD·EUR·GBP',a:'USD',b:'EUR',c:'GBP'},{label:'USD·EUR·JPY',a:'USD',b:'EUR',c:'JPY'},{label:'USD·GBP·CHF',a:'USD',b:'GBP',c:'CHF'},{label:'USD·EUR·MXN',a:'USD',b:'EUR',c:'MXN'},{label:'EUR·GBP·JPY',a:'EUR',b:'GBP',c:'JPY'}];
+let simRates={ab:0,bc:0,ca:0},simBase={ab:0,bc:0,ca:0};
+function toUSD(c){return c==='USD'?1:(RATE_USD[c]||1);}
+function mktRate(a,b){return toUSD(b)/toUSD(a);}
+function simBuildSelects(){
+  ['a','b','c'].forEach(id=>{
+    const s=document.getElementById('sim-'+id),cv=s.value;
+    s.innerHTML=CCYS.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(cv)s.value=cv;
+  });
+}
+function simBuildPresets(){
+  document.getElementById('presetRow').innerHTML=
+    '<div style="font-size:11px;color:var(--text-subtle);margin-bottom:6px;">Quick Presets</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+    PRESETS.map((p,i)=>`<button class="sim-btn" onclick="simLoadPreset(${i})" style="font-size:11px;">${p.label}</button>`).join('')+'</div>';
+}
+function simLoadPreset(i){
+  const p=PRESETS[i];
+  document.getElementById('sim-a').value=p.a;
+  document.getElementById('sim-b').value=p.b;
+  document.getElementById('sim-c').value=p.c;
+  simLoad();
+}
+function simLoad(){
+  const a=document.getElementById('sim-a').value,b=document.getElementById('sim-b').value,c=document.getElementById('sim-c').value;
+  simBase.ab=mktRate(a,b);simBase.bc=mktRate(b,c);simBase.ca=mktRate(c,a);
+  simRates.ab=simBase.ab;simRates.bc=simBase.bc;simRates.ca=simBase.ca;
+  buildRateRows(a,b,c);simCompute();
+}
+function buildRateRows(a,b,c){
+  const pairs=[{k:'ab',lbl:`${a}/${b}`},{k:'bc',lbl:`${b}/${c}`},{k:'ca',lbl:`${c}/${a}`}];
+  document.getElementById('rateRows').innerHTML=pairs.map(p=>`
+    <div class="sl-row">
+      <span class="sl-lbl">${p.lbl}</span>
+      <input type="range" min="0.01" max="${Math.max(simRates[p.k]*3,1)}" step="${simRates[p.k]*0.001}" value="${simRates[p.k].toFixed(6)}"
+        id="sl-${p.k}" oninput="onSlide('${p.k}',this.value)" style="flex:1;">
+      <input class="sim-input" id="in-${p.k}" value="${simRates[p.k].toFixed(4)}" onchange="onInput('${p.k}',this.value)" style="width:75px;flex-shrink:0;">
+    </div>`).join('');
+}
+function onSlide(k,v){simRates[k]=parseFloat(v);document.getElementById('in-'+k).value=parseFloat(v).toFixed(4);simCompute();}
+function onInput(k,v){const n=parseFloat(v);if(isNaN(n)||n<=0)return;simRates[k]=n;const sl=document.getElementById('sl-'+k);sl.max=Math.max(n*3,1);sl.value=n;simCompute();}
+function simCompute(){
+  const prod=simRates.ab*simRates.bc*simRates.ca;
+  const a=document.getElementById('sim-a').value,b=document.getElementById('sim-b').value,c=document.getElementById('sim-c').value;
+  const end=1000000*prod,pnl=end-1000000;
+  const dev=((prod-1)*100);
+  document.getElementById('arb-product').textContent=prod.toFixed(6);
+  document.getElementById('arb-dev').innerHTML=`<span style="color:${Math.abs(dev)>0.01?dev>0?'var(--gain)':'var(--loss)':'var(--text-muted)'}">${dev>=0?'+':''}${dev.toFixed(4)}%</span>`;
+  const badge=document.getElementById('arb-badge'),isArb=Math.abs(prod-1)>0.0001;
+  if(isArb){badge.className='tag '+(prod>1?'tag-ok':'tag-bad');badge.textContent=prod>1?'ARB ▲':'ARB ▼';}
+  else{badge.className='tag tag-warn';badge.textContent='NO ARB';}
+  document.getElementById('sim-end').innerHTML=`<span style="color:var(--text-subtle);font-size:15px;">End: </span><span style="color:${pnl>=0?'var(--gain)':'var(--loss)'}">$${end.toLocaleString('en-US',{maximumFractionDigits:0})}</span>`;
+  document.getElementById('sim-pnl').innerHTML=`<span style="color:${pnl>=0?'var(--gain)':'var(--loss)'}">${pnl>=0?'+':''}\$${pnl.toLocaleString('en-US',{maximumFractionDigits:0})}</span>`;
+  document.getElementById('sim-note').textContent=isArb?`Profit = ${dev.toFixed(4)}% on $1M notional`:'Market in equilibrium — no free lunch.';
+  document.getElementById('sim-path').innerHTML=
+    `$1,000,000 ${a}<br>→ ×${simRates.ab.toFixed(4)} = ${(1000000*simRates.ab).toLocaleString('en-US',{maximumFractionDigits:0})} ${b}<br>`+
+    `→ ×${simRates.bc.toFixed(4)} = ${(1000000*simRates.ab*simRates.bc).toLocaleString('en-US',{maximumFractionDigits:0})} ${c}<br>`+
+    `→ ×${simRates.ca.toFixed(4)} = ${end.toLocaleString('en-US',{maximumFractionDigits:0})} ${a}`;
+}
+function simInjectArb(){
+  const k=['ab','bc','ca'],i=Math.floor(Math.random()*3);
+  simRates[k[i]]*=1.015;
+  const el=document.getElementById('in-'+k[i]);if(el)el.value=simRates[k[i]].toFixed(4);
+  const sl=document.getElementById('sl-'+k[i]);if(sl){sl.max=Math.max(simRates[k[i]]*3,1);sl.value=simRates[k[i]];}
+  simCompute();
+}
+function simReset(){simLoad();}
+
+// ── EVENT CHART ───────────────────────────────────────────────────────
+let evChart=null;
+function seededRng(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296;};}
+function genEvSeries(shock,vol,seed){
+  // 41 points: Day -20 (idx 0) → Day +20 (idx 40); event at Day 0 = idx 20
+  const rng=seededRng(seed),N=41,ev=20,v=[0];
+  for(let i=1;i<N;i++){
+    const p=v[i-1];let d;
+    if(i<ev){d=vol*(rng()-0.5)*3;}
+    else if(i===ev){d=shock*100*0.72+vol*(rng()-0.5);}
+    else if(i===ev+1){d=shock*100*0.28+vol*(rng()-0.5)*1.5;}
+    else{const t=shock*100;d=0.10*(t-p)+vol*(rng()-0.5)*2;}
+    v.push(p+d);
+  }
+  // Normalize: Day -1 (idx 19) = 0% baseline, as requested
+  const base=v[19];
+  return v.map(x=>x-base);
+}
+function updateEvChart(id){
+  const ev=EVENTS.find(e=>e.id===id);
+  if(!ev||!ev.fx||typeof Chart==='undefined')return;
+  const days=Array.from({length:41},(_,i)=>i-20);
+  const vals=genEvSeries(ev.fx.shock,ev.fx.vol,ev.fx.seed);
+  const lbl=document.getElementById('ev-chart-lbl');
+  if(lbl)lbl.textContent=ev.fx.label;
+  const up=ev.fx.shock>0;
+  const lineC=up?'#15803D':'#DC2626';
+  const fillC=up?'rgba(21,128,61,0.10)':'rgba(220,38,38,0.10)';
+  if(evChart){evChart.destroy();evChart=null;}
+  const canvas=document.getElementById('ev-chart');
+  if(!canvas)return;
+  const isDark=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  const gridC=isDark?'rgba(30,53,88,0.8)':'rgba(200,216,236,0.4)';
+  const tickC=isDark?'#4A6A96':'#7896B4';
+  evChart=new Chart(canvas,{
+    type:'line',
+    data:{datasets:[{
+      data:days.map((d,i)=>({x:d,y:parseFloat(vals[i].toFixed(3))})),
+      borderColor:lineC,backgroundColor:fillC,fill:true,borderWidth:2.5,
+      pointRadius:0,tension:0.35,
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},tooltip:{
+        enabled:true,mode:'index',intersect:false,
+        callbacks:{
+          title:items=>`Day ${items[0].parsed.x>=0?'+':''}${items[0].parsed.x}`,
+          label:item=>`${item.parsed.y>=0?'+':''}${item.parsed.y.toFixed(2)}%`
+        },
+        backgroundColor:'rgba(10,22,40,0.88)',titleColor:'#E8F0FC',bodyColor:'#8BA8D0',
+        borderColor:'rgba(200,168,75,0.3)',borderWidth:1,padding:8,
+      }},
+      scales:{
+        x:{type:'linear',min:-20,max:20,
+          grid:{color:gridC},border:{display:false},
+          ticks:{color:tickC,font:{size:9.5,family:"'JetBrains Mono',monospace"},stepSize:5,
+            callback:v=>v===0?'Day 0\n(event)':(v>0?'+'+v:String(v))}},
+        y:{grid:{color:gridC},border:{display:false},
+          ticks:{color:tickC,font:{size:9.5},
+            callback:v=>(v>0?'+':'')+v.toFixed(1)+'%'}}
+      }
+    },
+    plugins:[{
+      id:'evBg',
+      beforeDatasetsDraw(chart){
+        const{ctx:c,chartArea:a,scales:sc}=chart;if(!a)return;
+        const x0=sc.x.getPixelForValue(0);
+        c.save();
+        c.fillStyle='rgba(15,42,92,0.04)';c.fillRect(a.left,a.top,x0-a.left,a.bottom-a.top);
+        c.fillStyle='rgba(200,168,75,0.04)';c.fillRect(x0,a.top,a.right-x0,a.bottom-a.top);
+        c.restore();
+      },
+      afterDatasetsDraw(chart){
+        const{ctx:c,chartArea:a,scales:sc}=chart;if(!a)return;
+        const x0=sc.x.getPixelForValue(0);
+        const xm1=sc.x.getPixelForValue(-1);
+        c.save();
+        // Baseline marker at Day -1
+        c.strokeStyle='rgba(8,145,178,0.6)';c.lineWidth=1.5;c.setLineDash([3,3]);
+        c.beginPath();c.moveTo(xm1,a.top+18);c.lineTo(xm1,a.bottom);c.stroke();
+        c.setLineDash([]);
+        c.fillStyle='rgba(8,145,178,0.75)';
+        c.font='bold 8px "JetBrains Mono",monospace';
+        c.textAlign='center';c.fillText('t=0\nbaseline',xm1,a.top+10);
+        // Event line at Day 0
+        c.strokeStyle='rgba(220,38,38,0.55)';c.lineWidth=1.5;c.setLineDash([4,3]);
+        c.beginPath();c.moveTo(x0,a.top+14);c.lineTo(x0,a.bottom);c.stroke();
+        c.setLineDash([]);
+        c.fillStyle='rgba(220,38,38,0.72)';
+        c.font='bold 9px "JetBrains Mono",monospace';
+        c.textAlign='center';c.fillText('Event',x0,a.top+10);
+        c.fillStyle='rgba(96,165,250,0.55)';c.font='8px sans-serif';c.fillText('← Before',a.left+(x0-a.left)/2,a.top+10);
+        c.fillStyle='rgba(251,191,36,0.55)';c.font='8px sans-serif';c.fillText('After →',x0+(a.right-x0)/2,a.top+10);
+        c.restore();
+      }
+    }]
+  });
+}
+
+// ── KATEX ────────────────────────────────────────────────────────────
+function rk(id,tex,display){
+  const el=document.getElementById(id);
+  if(!el)return;
+  try{katex.render(tex,el,{displayMode:!!display,throwOnError:false});}catch(e){el.textContent=tex;}
+}
+function renderKatex(){
+  // S4 Mispricing Factor
+  rk('eq-mf-formula','\\text{Mispricing Ratio} = \\dfrac{\\text{Implied Rate}}{\\text{Market Quote}} \\quad\\Rightarrow\\quad \\begin{cases} > 1 & \\text{arbitrage opportunity} \\\\ = 1 & \\text{no arbitrage} \\\\ < 1 & \\text{reversed arbitrage} \\end{cases}',true);
+  // S3 Example 1: EUR/GBP via division
+  rk('eq-cr1-f','\\dfrac{EUR}{GBP} = \\dfrac{EUR/USD}{GBP/USD}',true);
+  rk('eq-cr1-c','= \\dfrac{1.1200}{1.2700} = 0.8819',true);
+  // S3 Example 2: GBP/JPY via multiplication
+  rk('eq-cr2-f','\\dfrac{GBP}{JPY} = \\dfrac{GBP}{USD} \\times \\dfrac{USD}{JPY}',true);
+  rk('eq-cr2-c','= 1.2700 \\times 149.50 = 189.87',true);
+  // S7 step-by-step
+  rk('eq1','\\$1{,}000{,}000 \\div 1.2700 = 787{,}402\\;\\text{GBP}',true);
+  rk('eq2','787{,}402 \\div 0.8740 = 900{,}918\\;\\text{EUR}',true);
+  rk('eq3','900{,}918 \\times 1.1200 = \\$1{,}009{,}028',true);
+  rk('eq-product','\\tfrac{1}{1.2700}\\times\\tfrac{1}{0.8740}\\times 1.1200 = 1.0090',true);
+}
+
+// ── MISPRICING CALCULATOR ────────────────────────────────────────────
+function calcMF(){
+  const comp=parseFloat(document.getElementById('mf-computed').value);
+  const mkt=parseFloat(document.getElementById('mf-market').value);
+  if(isNaN(comp)||isNaN(mkt)||mkt===0)return;
+  const ratio=comp/mkt;
+  const pct=((ratio-1)*100);
+  const pips=Math.abs(comp-mkt)*10000;
+  const div=document.getElementById('mf-result');
+  let sc,sbg,sbr,stxt,icon;
+  if(ratio>1.0001){sc='var(--gain)';sbg='rgba(21,128,61,0.08)';sbr='rgba(21,128,61,.3)';stxt='ARBITRAGE';icon='⚡';}
+  else if(ratio<0.9999){sc='var(--loss)';sbg='rgba(220,38,38,0.07)';sbr='rgba(220,38,38,.3)';stxt='REVERSED ARB';icon='🔄';}
+  else{sc='var(--text-subtle)';sbg='var(--surface-2)';sbr='var(--border)';stxt='NO ARB';icon='✓';}
+  div.style.display='';
+  div.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
+    +'<div style="background:'+sbg+';border:2px solid '+sbr+';border-radius:8px;padding:12px;text-align:center;">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Mispricing Ratio</div>'
+    +'<div style="font-family:\'DM Serif Display\',Georgia,serif;font-size:26px;font-weight:700;color:'+sc+';">'+ratio.toFixed(4)+'</div>'
+    +'<div style="font-size:10px;color:'+sc+';margin-top:2px;">'+(pct>=0?'+':'')+pct.toFixed(3)+'%</div></div>'
+    +'<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Gap in Pips</div>'
+    +'<div style="font-family:\'DM Serif Display\',Georgia,serif;font-size:22px;color:var(--warn);">'+pips.toFixed(1)+' pips</div></div>'
+    +'<div style="background:'+sbg+';border:1px solid '+sbr+';border-radius:8px;padding:12px;text-align:center;">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Signal</div>'
+    +'<div style="font-size:22px;margin-bottom:3px;">'+icon+'</div>'
+    +'<div style="font-size:12px;font-weight:700;color:'+sc+';">'+stxt+'</div></div>'
+    +'</div>';
+}
+
+// ── CROSS RATE STEP-THROUGH ──────────────────────────────────────────
+let crSteps=[0,0];
+function advCR(ex){
+  crSteps[ex]=Math.min(crSteps[ex]+1,2);
+  renderCR(ex);
+}
+function renderCR(ex){
+  for(let s=1;s<=2;s++){
+    const el=document.getElementById('cr'+ex+'-s'+s);
+    if(el)el.style.display=s<=crSteps[ex]?'':'none';
+  }
+  const btn=document.getElementById('cr'+ex+'-btn');
+  if(btn){
+    if(crSteps[ex]===0){btn.textContent='Step 2: Show Formula →';btn.disabled=false;}
+    else if(crSteps[ex]===1){btn.textContent='Step 3: Compare vs Market →';btn.disabled=false;}
+    else{btn.textContent='✓ Complete';btn.disabled=true;btn.style.opacity='0.5';}
+  }
+  // Re-render KaTeX inside revealed steps
+  if(crSteps[ex]>=1){
+    if(ex===0){rk('eq-cr1-f','\\dfrac{EUR}{GBP} = \\dfrac{EUR/USD}{GBP/USD}',true);rk('eq-cr1-c','= \\dfrac{1.1200}{1.2700} = 0.8819',true);}
+    if(ex===1){rk('eq-cr2-f','\\dfrac{GBP}{JPY} = \\dfrac{GBP}{USD} \\times \\dfrac{USD}{JPY}',true);rk('eq-cr2-c','= 1.2700 \\times 149.50 = 189.87',true);}
+  }
+}
+function initCR(){
+  crSteps=[0,0];
+  renderCR(0);renderCR(1);
+}
+
+// ── ON ENTER ─────────────────────────────────────────────────────────
+function onEnter(i){
+  if(i===2){buildEvTabs();loadEv(curEv);}
+  if(i===3){initCR();}
+  if(i===9){
+    simBuildSelects();simBuildPresets();
+    document.getElementById('sim-a').value='USD';
+    document.getElementById('sim-b').value='EUR';
+    document.getElementById('sim-c').value='GBP';
+    simLoad();
+  }
+}
+// KaTeX: render after all resources loaded
+function tryRenderKatex(){
+  if(typeof katex!=='undefined'){renderKatex();}
+  else{setTimeout(tryRenderKatex,80);}
+}
+if(document.readyState==='complete'){tryRenderKatex();}
+else{window.addEventListener('load',tryRenderKatex);}
+goTo(0);
+</script>
+</body>
+</html>
