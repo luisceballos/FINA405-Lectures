@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FINA 405 · Lec 5 · Interest Rate Parity</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" id="katex-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F2A5C;--gold:#C8A84B;--teal:#0891B2;--gain:#15803D;--loss:#DC2626;--warn:#D97706;
+  --bg:#F2F3F5;--surface:#fff;--surface2:#F8F9FB;--border:#DDE0E6;
+  --text:#1A1D23;--muted:#6B7280;--subtle:#9CA3AF;
+  --c1:#0891B2;--c2:#D97706;--c3:#15803D;
+  --g1:#1D4ED8;--g2:#0891B2;--g3:#15803D;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0F1117;--surface:#1A1D23;--surface2:#22262F;--border:#2D3140;
+  --text:#E8EAF0;--muted:#9CA3AF;--subtle:#6B7280;--navy:#C8A84B;
+}}
+:root[data-theme=dark]{--bg:#0F1117;--surface:#1A1D23;--surface2:#22262F;--border:#2D3140;--text:#E8EAF0;--muted:#9CA3AF;--subtle:#6B7280;--navy:#C8A84B;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px}
+/* GATE */
+#gate{position:fixed;inset:0;background:rgba(10,12,20,.8);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#gate-box{background:var(--surface);border-radius:18px;padding:36px 32px;width:380px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+#gate-box .logo{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+#gate-box .sub{font-size:.78rem;color:var(--muted);margin-bottom:22px}
+.gate-tabs{display:flex;gap:8px;margin-bottom:18px}
+.gate-tab{flex:1;padding:7px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:.78rem;font-weight:600;cursor:pointer;text-align:center;color:var(--muted);transition:all .2s}
+.gate-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.gf{margin-bottom:13px}
+.gf label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.gf input,.gf select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.88rem;font-family:inherit}
+.gf select option{background:var(--surface);color:var(--text)}
+#gate-code-note{font-size:.7rem;color:var(--muted);background:#FFF8E7;border:1px solid #F0D080;border-radius:6px;padding:7px 10px;margin-bottom:14px}
+#gate-err{color:var(--loss);font-size:.78rem;margin-top:8px;display:none}
+.btn-primary{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:4px;transition:opacity .2s}
+.btn-primary:hover{opacity:.88}
+/* SETTINGS PANEL */
+#settings{position:fixed;top:0;right:-340px;height:100%;width:320px;background:var(--surface);border-left:1px solid var(--border);z-index:200;transition:right .35s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:24px 20px}
+#settings.open{right:0}
+#settings h3{font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+#settings h3:first-child{margin-top:0}
+.set-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.set-row input{flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.82rem;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.set-btn{padding:7px 12px;border-radius:7px;background:var(--navy);color:#fff;border:none;font-size:.78rem;font-weight:600;cursor:pointer}
+.set-note{font-size:.7rem;color:var(--muted);margin-bottom:10px}
+#roster-list{font-size:.74rem;line-height:1.9;max-height:260px;overflow-y:auto}
+.roster-entry{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid var(--border)}
+.g-badge{font-size:.65rem;font-weight:700;padding:1px 5px;border-radius:4px;color:#fff}
+.g1b{background:var(--g1)}.g2b{background:var(--g2)}.g3b{background:var(--g3)}
+#close-settings{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+/* DECK */
+#deck{height:100vh;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px 56px;opacity:0;pointer-events:none;transition:opacity .5s,transform .5s;transform:translateY(24px)}
+.slide.active{opacity:1;pointer-events:all;transform:translateY(0)}
+/* SECTION STRIPE */
+.stripe{position:absolute;top:0;left:0;right:0;height:4px}
+.c1-stripe{background:var(--c1)}.c2-stripe{background:var(--c2)}.c3-stripe{background:var(--c3)}
+/* SLIDE TYPOGRAPHY */
+.eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.slide-title{font-size:2rem;font-weight:700;color:var(--navy);line-height:1.15;margin-bottom:6px}
+.slide-sub{font-size:1rem;color:var(--muted);margin-bottom:28px}
+/* CARDS */
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px 24px}
+.card-grid{display:grid;gap:16px;width:100%;max-width:860px}
+.card-grid.cols2{grid-template-columns:1fr 1fr}
+.card-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.card-body{font-size:.9rem;line-height:1.7;color:var(--muted)}
+/* TWO-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:860px}
+/* KaTeX display */
+.katex-wrap{margin:18px 0;text-align:center;font-size:1.05rem}
+/* TABLE */
+table.data{width:100%;border-collapse:collapse;font-size:.88rem}
+table.data th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:600}
+table.data td{padding:7px 12px;border-bottom:1px solid var(--border)}
+table.data tr:last-child td{border-bottom:none}
+table.data tr:nth-child(even) td{background:var(--surface2)}
+/* CHIPS */
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin:2px}
+.chip-gain{background:rgba(21,128,61,.12);color:var(--gain)}
+.chip-loss{background:rgba(220,38,38,.1);color:var(--loss)}
+.chip-warn{background:rgba(217,119,6,.1);color:var(--warn)}
+.chip-blue{background:rgba(29,78,216,.1);color:var(--g1)}
+/* NAV */
+#nav-dots{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:100}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .25s;position:relative}
+.dot.c1{background:var(--c1)}.dot.c2{background:var(--c2)}.dot.c3{background:var(--c3)}
+.dot.active{transform:scale(1.4)}
+.dot:hover .dot-tip{display:block}
+.dot-tip{display:none;position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:.65rem;white-space:nowrap;padding:3px 7px;border-radius:4px}
+.nav-arr{position:fixed;top:50%;transform:translateY(-50%);z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--muted);transition:all .2s;user-select:none}
+.nav-arr:hover{color:var(--text);border-color:var(--subtle)}
+#prev-btn{left:14px}#next-btn{right:14px}
+/* SETTINGS TOGGLE */
+#settings-btn{position:fixed;top:14px;right:14px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:.75rem;font-weight:600;cursor:pointer;color:var(--muted)}
+/* SLIDE NUMBER BADGE */
+#slide-num{position:fixed;top:14px;left:14px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 11px;font-size:.74rem;font-weight:600;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+/* ROSTER CHIPS on s0 */
+#roster-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:800px;margin-top:18px}
+.stu-chip{font-size:.68rem;padding:3px 9px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.stu-chip.here{border-color:var(--teal);color:var(--teal);background:rgba(8,145,178,.08)}
+/* WORKSPACE */
+#workspace-box{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:24px 28px;max-width:520px;width:100%}
+.ws-pair{font-size:1.6rem;font-weight:700;margin-bottom:4px}
+.ws-row{display:flex;justify-content:space-between;font-size:.85rem;padding:5px 0;border-bottom:1px solid var(--border);color:var(--muted)}
+.ws-row:last-of-type{border:none}
+.ws-val{font-family:'IBM Plex Mono',monospace;color:var(--text);font-weight:600}
+.ws-input-row{margin-top:16px;display:flex;gap:10px}
+.ws-input-row input{flex:1;padding:10px 13px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:1rem;font-family:'IBM Plex Mono',monospace}
+.ws-input-row input:focus{outline:none;border-color:var(--teal)}
+.ws-submit{padding:10px 20px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-weight:600;cursor:pointer;font-size:.9rem}
+#ws-feedback{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.88rem;display:none}
+.fb-ok{background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);color:var(--gain)}
+.fb-err{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);color:var(--loss)}
+/* LIVE CHART */
+#charts-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;width:100%;max-width:960px}
+.chart-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px}
+.chart-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;text-align:center}
+.chart-count{font-size:.65rem;color:var(--muted);text-align:center;margin-top:6px}
+canvas{max-width:100%}
+/* TITLE SLIDE */
+#s0{background:linear-gradient(135deg,var(--navy) 0%,#1a3f7a 100%);color:#fff}
+#s0 .eyebrow{color:rgba(255,255,255,.55)}
+#s0 .slide-title{color:#fff;font-size:2.6rem}
+#s0 .slide-sub{color:var(--gold)}
+/* WHAT WE LEARNED */
+.learned-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:820px;width:100%}
+.learned-item{display:flex;gap:12px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.learned-num{font-size:1.4rem;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;min-width:32px}
+.learned-text{font-size:.88rem;line-height:1.6;color:var(--muted)}
+.learned-text strong{color:var(--text)}
+/* FLOW DIAGRAM */
+.flow-row{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.flow-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:.82rem;text-align:center}
+.flow-arrow{color:var(--muted);font-size:1.1rem}
+/* ARROWHEAD HIGHLIGHT */
+.hl-gain{color:var(--gain);font-weight:700}
+.hl-loss{color:var(--loss);font-weight:700}
+.hl-warn{color:var(--warn);font-weight:700}
+.hl-teal{color:var(--teal);font-weight:700}
+/* CIA CALCULATOR */
+#cia-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;max-width:480px}
+#cia-form input{padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+#cia-form label{font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px}
+#cia-result{padding:12px 16px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);font-size:.88rem;min-height:50px;font-family:'IBM Plex Mono',monospace}
+/* DISCUSSION */
+.disc-q{background:var(--surface2);border-left:4px solid var(--teal);border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:14px;font-size:.92rem;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+ <div id="gate-box">
+  <div class="logo">FINA 405</div>
+  <div class="sub">Interest Rate Parity · Fall 2026 · USD Knauss</div>
+  <div class="gate-tabs">
+   <div class="gate-tab on" onclick="gateTab('student')" id="tab-stu">Student</div>
+   <div class="gate-tab" onclick="gateTab('prof')" id="tab-prof">Instructor</div>
+  </div>
+  <!-- STUDENT FIELDS -->
+  <div id="stu-fields">
+   <div class="gf"><label>Today's Class Code</label>
+    <input id="gate-code" placeholder="Enter code" autocomplete="off" style="text-transform:uppercase">
+    <div id="gate-code-note" style="margin-top:6px">Your professor will announce the code at the start of class.</div>
+   </div>
+   <div class="gf"><label>Your Name</label>
+    <select id="gate-name"><option value="">— Select your name —</option></select>
+   </div>
+  </div>
+  <!-- INSTRUCTOR FIELDS -->
+  <div id="prof-fields" style="display:none">
+   <div class="gf"><label>Instructor PIN</label>
+    <input type="password" id="gate-pin" placeholder="••••••••">
+   </div>
+  </div>
+  <div id="gate-err"></div>
+  <button class="btn-primary" onclick="gateSubmit()">Enter Class →</button>
+ </div>
+</div>
+
+<!-- INSTRUCTOR SETTINGS -->
+<div id="settings">
+ <button id="close-settings" onclick="closeSettings()">✕</button>
+ <div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:4px">Instructor Panel</div>
+ <div style="font-size:.72rem;color:var(--muted);margin-bottom:18px">FINA 405 · Interest Rate Parity</div>
+ <h3>Class Code</h3>
+ <div class="set-row">
+  <input id="new-code-input" placeholder="New code" maxlength="12">
+  <button class="set-btn" onclick="changeCode()">Set</button>
+ </div>
+ <div class="set-note">Current: <span id="cur-code-display" style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">—</span></div>
+ <h3>Participants (<span id="count-present">0</span> / 40)</h3>
+ <div id="roster-list"></div>
+ <h3 style="margin-top:18px">Submissions</h3>
+ <div class="set-note"><span id="count-correct">0</span> correct · <span id="count-total">0</span> submitted</div>
+ <button class="set-btn" onclick="resetSubmissions()" style="margin-top:6px;background:var(--loss)">Reset All Submissions</button>
+</div>
+<button id="settings-btn" style="display:none" onclick="openSettings()">⚙ Instructor</button>
+
+<!-- SLIDE NUMBER BADGE -->
+<div id="slide-num"></div>
+
+<!-- DECK -->
+<div id="deck">
+
+<!-- s0: Title -->
+<div class="slide" id="s0">
+ <div style="text-align:center">
+  <div class="eyebrow">FINA 405 · International Financial Management</div>
+  <div class="slide-title" style="font-size:2.8rem;color:#fff;margin-bottom:8px">Interest Rate Parity</div>
+  <div class="slide-sub">Lecture 5 · Fall 2026 · University of San Diego</div>
+  <div style="width:60px;height:3px;background:var(--gold);margin:20px auto"></div>
+  <div style="font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:24px">Today: Why do interest rate differentials create forward rates — and arbitrage opportunities?</div>
+  <div id="roster-chips"></div>
+ </div>
+</div>
+
+<!-- s1: FX Risk Poll (NEW) -->
+<div class="slide" id="s1-poll">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 1 — Quick Think</div>
+  <div class="slide-title">FX Risk: Asset or Liability?</div>
+  <div class="slide-sub">Select your answer for each scenario — results update live.</div>
+  <div class="card-grid cols2" style="margin-bottom:14px">
+   <!-- Question A -->
+   <div class="card" style="border-top:3px solid var(--warn)">
+    <div class="card-title" style="color:var(--warn)">A — You will RECEIVE €1M in 6M<br><small style="font-weight:400;font-size:.74rem">(Foreign Currency ASSET — export receivable)</small></div>
+    <div class="card-body" style="font-size:.86rem;margin-bottom:12px">FX risk hurts you when EUR…</div>
+    <div style="display:flex;gap:8px" id="qa-btns">
+     <button class="poll-btn" onclick="submitPoll('A','appreciates')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">📈 Appreciates</button>
+     <button class="poll-btn" onclick="submitPoll('A','depreciates')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">📉 Depreciates</button>
+    </div>
+    <div id="poll-a-bar" style="margin-top:12px;display:none">
+     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>📈 Appreciates</span><span id="pa-app-pct">0%</span></div>
+     <div style="height:8px;background:var(--border);border-radius:4px;margin-bottom:6px"><div id="pa-app-bar" style="height:100%;width:0%;background:#D97706;border-radius:4px;transition:width .4s"></div></div>
+     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>📉 Depreciates</span><span id="pa-dep-pct">0%</span></div>
+     <div style="height:8px;background:var(--border);border-radius:4px"><div id="pa-dep-bar" style="height:100%;width:0%;background:#0891B2;border-radius:4px;transition:width .4s"></div></div>
+     <div id="pa-correct" style="display:none;margin-top:8px;font-size:.78rem;color:var(--gain);font-weight:600">✓ Correct: Depreciates — you get fewer USD when converting the receivable.</div>
+    </div>
+   </div>
+   <!-- Question B -->
+   <div class="card" style="border-top:3px solid var(--loss)">
+    <div class="card-title" style="color:var(--loss)">B — You must PAY €1M in 6M<br><small style="font-weight:400;font-size:.74rem">(Foreign Currency LIABILITY — import payable)</small></div>
+    <div class="card-body" style="font-size:.86rem;margin-bottom:12px">FX risk hurts you when EUR…</div>
+    <div style="display:flex;gap:8px" id="qb-btns">
+     <button class="poll-btn" onclick="submitPoll('B','appreciates')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">📈 Appreciates</button>
+     <button class="poll-btn" onclick="submitPoll('B','depreciates')" style="flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">📉 Depreciates</button>
+    </div>
+    <div id="poll-b-bar" style="margin-top:12px;display:none">
+     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>📈 Appreciates</span><span id="pb-app-pct">0%</span></div>
+     <div style="height:8px;background:var(--border);border-radius:4px;margin-bottom:6px"><div id="pb-app-bar" style="height:100%;width:0%;background:#DC2626;border-radius:4px;transition:width .4s"></div></div>
+     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px"><span>📉 Depreciates</span><span id="pb-dep-pct">0%</span></div>
+     <div style="height:8px;background:var(--border);border-radius:4px"><div id="pb-dep-bar" style="height:100%;width:0%;background:#0891B2;border-radius:4px;transition:width .4s"></div></div>
+     <div id="pb-correct" style="display:none;margin-top:8px;font-size:.78rem;color:var(--gain);font-weight:600">✓ Correct: Appreciates — you pay more USD when EUR is stronger.</div>
+    </div>
+   </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+   <div id="poll-status" style="font-size:.78rem;color:var(--muted)">Waiting for responses...</div>
+   <button onclick="revealPollAnswers()" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;display:none" id="reveal-poll-btn">⚡ Reveal Answers (Instructor)</button>
+  </div>
+ </div>
+</div>
+
+<!-- s2: The Importer's Problem -->
+<div class="slide" id="s2">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 1 — Foundation</div>
+  <div class="slide-title">The Importer's Problem</div>
+  <div class="slide-sub">A U.S. firm imports machinery from Germany — and worries about EUR/USD volatility.</div>
+  <div class="card-grid cols2">
+   <div class="card">
+    <div class="card-title" style="color:var(--loss)">😰 If EUR Appreciates vs USD</div>
+    <div class="card-body">
+     The firm owes €1,000,000 in 6 months.<br><br>
+     <strong>Today:</strong> EUR/USD = 1.08 → cost = <span class="ws-val">$1,080,000</span><br><br>
+     <strong>In 6M if EUR = 1.15:</strong> cost = <span class="hl-loss">$1,150,000</span><br>
+     <em>Unexpected loss: +$70,000 vs. plan</em>
+    </div>
+   </div>
+   <div class="card">
+    <div class="card-title" style="color:var(--gain)">😊 If EUR Depreciates vs USD</div>
+    <div class="card-body">
+     The firm owes €1,000,000 in 6 months.<br><br>
+     <strong>Today:</strong> EUR/USD = 1.08 → cost = <span class="ws-val">$1,080,000</span><br><br>
+     <strong>In 6M if EUR = 1.02:</strong> cost = <span class="hl-gain">$1,020,000</span><br>
+     <em>Windfall saving: −$60,000 vs. plan</em>
+    </div>
+   </div>
+  </div>
+  <div class="card" style="margin-top:16px;text-align:center">
+   <div class="card-title">💡 The Solution: Lock in the Forward Rate Today</div>
+   <div class="card-body" style="text-align:left;max-width:620px;margin:0 auto">
+    The firm can <strong>buy EUR forward</strong> — agreeing today on the rate it will pay in 6 months.<br>
+    The fair forward rate is determined by <span class="hl-teal">Interest Rate Parity (IRP)</span> — not by guessing.
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s3: Converting Foreign CFs Recap -->
+<div class="slide" id="s3">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:820px">
+  <div class="eyebrow">Section 1 — Recap</div>
+  <div class="slide-title">Converting Foreign Cash Flows</div>
+  <div class="slide-sub">Two approaches — one certain, one uncertain.</div>
+  <div class="card-grid cols2">
+   <div class="card" style="border-color:var(--subtle)">
+    <div class="card-title" style="color:var(--warn)">Method 1 — Wait for Spot Rate</div>
+    <div class="card-body">
+     Convert foreign CFs at <em>whatever</em> the spot rate is at maturity.<br><br>
+     ✗ You don't know what the rate will be.<br>
+     ✗ Exposed to FX risk — budgeting is impossible.
+    </div>
+   </div>
+   <div class="card" style="border-color:var(--teal)">
+    <div class="card-title" style="color:var(--teal)">Method 2 — Use the Forward Rate</div>
+    <div class="card-body">
+     Lock in the forward rate <em>today</em> for delivery at maturity.<br><br>
+     ✓ Eliminates FX uncertainty.<br>
+     ✓ Enables precise budgeting and hedging.
+    </div>
+   </div>
+  </div>
+  <div style="margin-top:20px;text-align:center;padding:12px 18px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.2);border-radius:9px">
+   <div style="font-size:.88rem;color:var(--teal)"><strong>Key takeaway:</strong> The forward rate is not a guess — it is derived from IRP, which we cover next.</div>
+  </div>
+ </div>
+</div>
+
+<!-- s4: Example 1 — Covered Arb -->
+<div class="slide" id="s4">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:820px">
+  <div class="eyebrow">Section 1 — Example 1</div>
+  <div class="slide-title">Deriving the Forward Rate</div>
+  <div class="slide-sub">What forward rate eliminates all arbitrage profit? — USD rates 5%, EUR rates 3%, Spot EUR/USD = 1.0850</div>
+  <table class="data" style="margin-bottom:16px">
+   <tr><th>Step</th><th>Action</th><th>Amount</th></tr>
+   <tr><td>t = 0</td><td>Borrow <strong>€1,000,000</strong> at r<sub>EUR</sub> = 3% for 1 year</td><td>—</td></tr>
+   <tr><td>t = 0</td><td>Convert to USD at spot EUR/USD = 1.0850</td><td class="hl-teal">$1,085,000</td></tr>
+   <tr><td>t = 0</td><td>Lend $1,085,000 in U.S. at r<sub>USD</sub> = 5% for 1 year</td><td>—</td></tr>
+   <tr><td>t = 1</td><td>Receive USD principal + interest</td><td class="hl-gain">$1,139,250</td></tr>
+   <tr><td>t = 1</td><td>Repay EUR loan + interest</td><td class="hl-loss">€1,030,000</td></tr>
+   <tr><td>t = 1</td><td><strong>Implied forward rate (no-arb)</strong></td><td><strong>$1,139,250 ÷ €1,030,000 = <span class="hl-teal">1.1061</span></strong></td></tr>
+  </table>
+  <div style="text-align:center">
+   <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px">Verify with IRP formula (linear rates):</div>
+   <div id="rk-ex1"></div>
+  </div>
+ </div>
+</div>
+
+<!-- s5: IRP Formula -->
+<div class="slide" id="s5">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 1 — Core Formula</div>
+  <div class="slide-title">Interest Rate Parity</div>
+  <div class="slide-sub">The no-arbitrage relationship between spot rates, forward rates, and interest rate differentials.</div>
+  <div style="text-align:center;margin:8px 0 16px">
+   <div id="rk-irp" style="font-size:1.15rem"></div>
+   <div style="margin-top:10px;font-size:.8rem;color:var(--muted)">Equivalently, using quote / base currency notation:</div>
+   <div id="rk-irp2" style="font-size:1.05rem;margin-top:6px"></div>
+  </div>
+  <div class="card-grid cols3" style="max-width:820px">
+   <div class="card" style="text-align:center">
+    <div class="card-title" style="color:var(--navy)">F</div>
+    <div class="card-body">Forward exchange rate<br><span style="font-size:.76rem">(units of domestic per foreign)</span></div>
+   </div>
+   <div class="card" style="text-align:center">
+    <div class="card-title" style="color:var(--teal)">S</div>
+    <div class="card-body">Spot exchange rate<br><span style="font-size:.76rem">(today's rate)</span></div>
+   </div>
+   <div class="card" style="text-align:center">
+    <div class="card-title" style="color:var(--warn)">T</div>
+    <div class="card-body">Maturity in <strong>years</strong><br><span style="font-size:.76rem">3M = 0.25, 12M = 1.0</span></div>
+   </div>
+  </div>
+  <div class="card" style="margin-top:14px;max-width:820px;background:rgba(8,145,178,.06);border-color:rgba(8,145,178,.25)">
+   <div class="card-body" style="text-align:center;font-size:.9rem">
+    <strong>Intuition:</strong> The forward rate compensates for the interest rate advantage of the higher-yielding currency.
+    If i<sub>quote</sub> &gt; i<sub>base</sub>, then F &gt; S — the quote currency trades at a <span class="hl-teal">forward premium</span>.
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s6-brl: Brazil USD/BRL Forward Curve -->
+<div class="slide" id="s6-brl">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 1 — High Rate Example</div>
+  <div class="slide-title">Brazil: USD/BRL Forward Curve</div>
+  <div class="slide-sub">High rate differential → BRL depreciates sharply in the forward market.</div>
+  <div class="two-col" style="gap:18px;align-items:start">
+   <div>
+    <div class="card" style="margin-bottom:14px;border-top:3px solid #DC2626">
+     <div class="card-title" style="color:#DC2626">🇧🇷 Market Data</div>
+     <table class="data" style="font-size:.85rem">
+      <tr><td>Spot (S)</td><td class="ws-val">5.20 BRL/USD</td></tr>
+      <tr><td>i<sub>base</sub> = r<sub>USD</sub></td><td class="ws-val">5.25% p.a.</td></tr>
+      <tr><td>i<sub>quote</sub> = r<sub>BRL</sub></td><td class="ws-val">14.75% p.a.</td></tr>
+      <tr><td>Rate differential</td><td class="ws-val hl-loss">+9.50%</td></tr>
+     </table>
+    </div>
+    <div class="card" style="background:rgba(220,38,38,.05);border-color:rgba(220,38,38,.2)">
+     <div class="card-title">IRP Formula</div>
+     <div id="rk-brl" style="font-size:.9rem"></div>
+     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">Since r<sub>BRL</sub> &gt; r<sub>USD</sub>: BRL at <span class="hl-loss">forward discount</span> — needs more BRL per USD over time.</div>
+    </div>
+   </div>
+   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;text-align:center;margin-bottom:8px;color:var(--muted)">USD/BRL Forward Rate vs Maturity</div>
+    <div style="height:260px"><canvas id="chart-brl"></canvas></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s7-jpy: Japan USD/JPY Forward Curve -->
+<div class="slide" id="s7-jpy">
+ <div class="stripe c1-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 1 — Low Rate Example</div>
+  <div class="slide-title">Japan: USD/JPY Forward Curve</div>
+  <div class="slide-sub">Low rate differential → JPY strengthens gradually in the IRP forward market.</div>
+  <div class="two-col" style="gap:18px;align-items:start">
+   <div>
+    <div class="card" style="margin-bottom:14px;border-top:3px solid #1D4ED8">
+     <div class="card-title" style="color:#1D4ED8">🇯🇵 Market Data</div>
+     <table class="data" style="font-size:.85rem">
+      <tr><td>Spot (S)</td><td class="ws-val">149.50 JPY/USD</td></tr>
+      <tr><td>i<sub>base</sub> = r<sub>USD</sub></td><td class="ws-val">5.25% p.a.</td></tr>
+      <tr><td>i<sub>quote</sub> = r<sub>JPY</sub></td><td class="ws-val">0.10% p.a.</td></tr>
+      <tr><td>Rate differential</td><td class="ws-val hl-gain">−5.15%</td></tr>
+     </table>
+    </div>
+    <div class="card" style="background:rgba(29,78,216,.04);border-color:rgba(29,78,216,.2)">
+     <div class="card-title">IRP Formula</div>
+     <div id="rk-jpy" style="font-size:.9rem"></div>
+     <div style="font-size:.8rem;color:var(--muted);margin-top:8px">Since r<sub>JPY</sub> &lt; r<sub>USD</sub>: JPY at <span class="hl-gain">forward premium</span> — fewer JPY needed per USD over time.</div>
+    </div>
+   </div>
+   <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px">
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;text-align:center;margin-bottom:8px;color:var(--muted)">USD/JPY Forward Rate vs Maturity</div>
+    <div style="height:260px"><canvas id="chart-jpy"></canvas></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s8: Group Assignment -->
+<div class="slide" id="s8">
+ <div class="stripe c3-stripe"></div>
+ <div style="width:100%;max-width:860px;text-align:center">
+  <div class="eyebrow">Part 2 — Class Exercise</div>
+  <div class="slide-title">Build the Forward Curve — Together</div>
+  <div class="slide-sub">Each of you has a unique maturity. Your group shares a currency pair. Together you'll trace out the full IRP forward curve.</div>
+  <div class="card-grid cols3" style="margin-bottom:20px;max-width:820px">
+   <div class="card" style="border-top:3px solid var(--g1)">
+    <div class="card-title" style="color:var(--g1)">Group 1 — EUR/USD</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Spot 1.0850 · r<sub>USD</sub>=5.25% · r<sub>EUR</sub>=3.75%</div>
+    <div id="g1-names" style="font-size:.72rem;line-height:1.8;color:var(--muted)"></div>
+   </div>
+   <div class="card" style="border-top:3px solid var(--g2)">
+    <div class="card-title" style="color:var(--g2)">Group 2 — GBP/USD</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Spot 1.2700 · r<sub>USD</sub>=5.25% · r<sub>GBP</sub>=5.00%</div>
+    <div id="g2-names" style="font-size:.72rem;line-height:1.8;color:var(--muted)"></div>
+   </div>
+   <div class="card" style="border-top:3px solid var(--g3)">
+    <div class="card-title" style="color:var(--g3)">Group 3 — USD/JPY</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Spot 149.50 · r<sub>USD</sub>=5.25% · r<sub>JPY</sub>=0.10%</div>
+    <div id="g3-names" style="font-size:.72rem;line-height:1.8;color:var(--muted)"></div>
+   </div>
+  </div>
+  <div style="padding:12px 20px;background:rgba(21,128,61,.08);border:1px solid rgba(21,128,61,.3);border-radius:9px;font-size:.88rem;color:var(--gain);max-width:620px;margin:0 auto">
+   <strong>Formula:</strong> F = S × (1 + r<sub>d</sub> × T) / (1 + r<sub>f</sub> × T) &nbsp;·&nbsp; T in years &nbsp;·&nbsp; Use linear (simple) rates
+  </div>
+ </div>
+</div>
+
+<!-- s9: Group Workspace -->
+<div class="slide" id="s9">
+ <div class="stripe c3-stripe"></div>
+ <div style="width:100%;max-width:560px">
+  <div class="eyebrow">Part 2 — Your Workspace</div>
+  <div class="slide-title">Calculate Your Forward Rate</div>
+  <div id="workspace-box" class="card" style="margin-top:4px">
+   <div id="ws-not-entered" style="color:var(--muted);font-size:.9rem;padding:20px 0;text-align:center">
+    Please enter the class with your name to see your assignment.
+   </div>
+   <div id="ws-content" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+     <div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Your Pair</div>
+      <div id="ws-pair" class="ws-pair"></div>
+     </div>
+     <div id="ws-group-badge" style="font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:20px;color:#fff"></div>
+    </div>
+    <div class="ws-row"><span>Spot Rate (S)</span><span id="ws-spot" class="ws-val"></span></div>
+    <div class="ws-row"><span id="ws-rd-label">r<sub>USD</sub> (i<sub>quote</sub>)</span><span id="ws-rd" class="ws-val"></span></div>
+    <div class="ws-row"><span id="ws-rf-label">r<sub>foreign</sub> (i<sub>base</sub>)</span><span id="ws-rf" class="ws-val"></span></div>
+    <div class="ws-row"><span>Your Maturity (T)</span><span id="ws-maturity" class="ws-val"></span></div>
+    <div style="margin:14px 0;padding:10px 14px;background:rgba(21,128,61,.06);border-radius:7px;font-size:.82rem;font-family:'IBM Plex Mono',monospace;color:var(--muted)">
+     F = S × (1 + r<sub>d</sub> × T) / (1 + r<sub>f</sub> × T)
+    </div>
+    <div class="ws-input-row">
+     <input id="ws-answer" type="number" step="0.0001" placeholder="Your forward rate F = ?" id="ws-input">
+     <button class="ws-submit" onclick="submitAnswer()" id="ws-submit-btn">Submit</button>
+    </div>
+    <div id="ws-feedback"></div>
+    <div id="ws-already-done" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(21,128,61,.1);border-radius:8px;font-size:.85rem;color:var(--gain)">
+     ✓ Answer submitted — check the Live IRP Curves slide to see your point!
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s10: Live IRP Curves -->
+<div class="slide" id="s10">
+ <div class="stripe c3-stripe"></div>
+ <div style="width:100%;max-width:980px;text-align:center">
+  <div class="eyebrow">Part 2 — Live Results</div>
+  <div class="slide-title">Forward Curves — Class Build</div>
+  <div class="slide-sub" id="chart-progress">Waiting for submissions...</div>
+  <div id="charts-wrap">
+   <div class="chart-card" style="border-top:3px solid var(--g1)">
+    <div class="chart-label" style="color:var(--g1)">EUR / USD</div>
+    <canvas id="chart-g1"></canvas>
+    <div class="chart-count" id="count-g1">0 / 13 submitted</div>
+   </div>
+   <div class="chart-card" style="border-top:3px solid var(--g2)">
+    <div class="chart-label" style="color:var(--g2)">GBP / USD</div>
+    <canvas id="chart-g2"></canvas>
+    <div class="chart-count" id="count-g2">0 / 13 submitted</div>
+   </div>
+   <div class="chart-card" style="border-top:3px solid var(--g3)">
+    <div class="chart-label" style="color:var(--g3)">USD / JPY</div>
+    <canvas id="chart-g3"></canvas>
+    <div class="chart-count" id="count-g3">0 / 14 submitted</div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s6: Multinational Case (MOVED after Live Curves) -->
+<div class="slide" id="s6">
+ <div class="stripe c2-stripe"></div>
+ <div style="width:100%;max-width:820px">
+  <div class="eyebrow">Section 2 — Application</div>
+  <div class="slide-title">Multinational Case: TechGlobal Inc.</div>
+  <div class="slide-sub">A U.S. tech firm must pay a German supplier €2,500,000 in 18 months and wants to hedge.</div>
+  <div class="card-grid cols2" style="margin-bottom:14px">
+   <div class="card">
+    <div class="card-title">Given Data</div>
+    <table class="data" style="font-size:.82rem">
+     <tr><td>EUR/USD Spot (S)</td><td class="ws-val">1.0850</td></tr>
+     <tr><td>r_USD (domestic)</td><td class="ws-val">5.25% p.a.</td></tr>
+     <tr><td>r_EUR (foreign)</td><td class="ws-val">3.75% p.a.</td></tr>
+     <tr><td>Maturity (T)</td><td class="ws-val">18M = 1.5 yrs</td></tr>
+    </table>
+   </div>
+   <div class="card">
+    <div class="card-title" style="color:var(--gain)">Step-by-Step Solution</div>
+    <div id="rk-mn" style="margin-bottom:10px;font-size:.85rem"></div>
+    <div style="font-size:.88rem;color:var(--muted);line-height:1.8">
+     F(18M) = 1.0850 × 1.07875 / 1.05625<br>
+     F(18M) = <span class="hl-gain" style="font-family:'IBM Plex Mono',monospace">1.1081</span><br><br>
+     <strong>USD cost of hedge:</strong><br>
+     €2,500,000 × 1.1081 = <span class="hl-gain" style="font-family:'IBM Plex Mono',monospace">$2,770,250</span>
+    </div>
+   </div>
+  </div>
+  <div style="padding:12px 18px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:9px;font-size:.85rem;color:var(--warn)">
+   <strong>Managerial takeaway:</strong> By locking in the IRP-implied forward rate today, TechGlobal converts FX risk into a known USD obligation — enabling precise financial planning regardless of where spot ends up in 18 months.
+  </div>
+ </div>
+</div>
+
+<!-- s7-hedge: Hedge Outcome Scenarios (MOVED after Multinational Case, with zero-cost note) -->
+<div class="slide" id="s7-hedge">
+ <div class="stripe c2-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 2 — Hedge Mechanics</div>
+  <div class="slide-title">What Happens at Maturity?</div>
+  <div class="slide-sub">TechGlobal locked in F(18M) = 1.1081. Spot at maturity determines the outcome — but the cost was always <strong>known</strong>.</div>
+  <div class="card-grid cols2" style="margin-bottom:14px">
+   <div class="card" style="border-top:3px solid var(--loss)">
+    <div class="card-title" style="color:var(--loss)">😰 Scenario A — EUR Strengthened<br><small style="font-weight:400;font-size:.74rem">Spot(18M) = 1.1500 &gt; Forward 1.1081</small></div>
+    <div class="card-body" style="font-size:.85rem;line-height:1.95">
+     <em>Without</em> hedge: €2.5M × 1.1500 = <span class="hl-loss">$2,875,000</span><br>
+     <em>With</em> hedge:&nbsp;&nbsp;&nbsp; €2.5M × 1.1081 = <span class="hl-gain">$2,770,250</span><br>
+     <strong>Hedge saved: <span class="hl-gain">$104,750</span></strong><br>
+     <span class="chip chip-gain" style="margin-top:3px">✓ Hedge outperformed spot</span>
+    </div>
+   </div>
+   <div class="card" style="border-top:3px solid var(--gain)">
+    <div class="card-title" style="color:var(--gain)">😊 Scenario B — EUR Weakened<br><small style="font-weight:400;font-size:.74rem">Spot(18M) = 1.0600 &lt; Forward 1.1081</small></div>
+    <div class="card-body" style="font-size:.85rem;line-height:1.95">
+     <em>Without</em> hedge: €2.5M × 1.0600 = <span class="hl-gain">$2,650,000</span><br>
+     <em>With</em> hedge:&nbsp;&nbsp;&nbsp; €2.5M × 1.1081 = <span class="hl-loss">$2,770,250</span><br>
+     <strong>Hedge cost extra: <span class="hl-loss">$120,250</span></strong><br>
+     <span class="chip chip-warn" style="margin-top:3px">Spot was cheaper — price was fixed</span>
+    </div>
+   </div>
+  </div>
+  <div style="padding:12px 18px;background:rgba(8,145,178,.08);border:1px solid rgba(8,145,178,.25);border-radius:9px;font-size:.88rem;color:var(--teal);text-align:center">
+   <strong>Key insight:</strong> A forward hedge is <em>insurance</em>, not speculation. You give up upside to eliminate downside — and always know your cost in advance.
+   A forward contract has <strong>zero upfront cost</strong> — no premium is paid at inception, unlike options.
+  </div>
+ </div>
+</div>
+
+<!-- s11-easy: Easy CIA Participation -->
+<div class="slide" id="s11-easy">
+ <div class="stripe c2-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 2 — Quick Check</div>
+  <div class="slide-title">Spot the Arbitrage</div>
+  <div class="slide-sub">EUR/USD Spot = 1.0850 · r<sub>USD</sub> = 5.25% · r<sub>EUR</sub> = 3.75% · T = 1 yr · Market Forward = 1.0900</div>
+  <div class="card-grid cols2" style="margin-bottom:14px">
+   <div class="card">
+    <div class="card-title">Think it through 🤔</div>
+    <div class="card-body" style="font-size:.9rem;line-height:2.3">
+     <strong>A.</strong> Calculate F<sub>IRP</sub>. Is EUR over- or undervalued in forward?<br>
+     <strong>B.</strong> Which currency do you borrow? Where do you invest?<br>
+     <strong>C.</strong> What is your USD gain per $1,000,000?
+    </div>
+   </div>
+   <div class="card" id="ecia-answer" style="opacity:.08;pointer-events:none;transition:opacity .5s;border-color:var(--gain)">
+    <div class="card-title" style="color:var(--gain)">✓ Solution</div>
+    <div class="card-body" style="font-size:.81rem;line-height:1.9;font-family:'IBM Plex Mono',monospace">
+     F<sub>IRP</sub> = 1.0850 × 1.0525/1.0375 = <strong style="color:var(--teal)">1.1007</strong><br>
+     F<sub>mkt</sub> 1.0900 &lt; 1.1007 → EUR <span class="hl-warn">underpriced</span> fwd<br><br>
+     ① Borrow €921,659 @ 3.75%<br>
+     &nbsp;&nbsp;&nbsp;→ owe €956,221 at T=1<br>
+     ② Convert → $1,000,000 @ spot 1.0850<br>
+     ③ Invest → receive $1,052,500 @ 5.25%<br>
+     ④ Buy €956,221 fwd @ 1.0900 = $1,042,281<br>
+     <strong>Profit: <span class="hl-gain">$10,219</span> per $1M</strong>
+    </div>
+   </div>
+  </div>
+  <button id="ecia-reveal-btn"
+   onclick="document.getElementById('ecia-answer').style.opacity='1';document.getElementById('ecia-answer').style.pointerEvents='all';this.style.display='none'"
+   style="padding:10px 28px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-weight:600;cursor:pointer;font-size:.9rem">
+   Reveal Answer →
+  </button>
+ </div>
+</div>
+
+<!-- s12-cia: Covered Interest Arbitrage — AUD/USD example -->
+<div class="slide" id="s12-cia">
+ <div class="stripe c2-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 2 — When IRP Is Violated</div>
+  <div class="slide-title">Covered Interest Arbitrage</div>
+  <div class="slide-sub">AUD/USD example — the market forward is mispriced. How large is the arbitrage?</div>
+  <div class="two-col" style="gap:18px">
+   <div>
+    <div class="card" style="margin-bottom:14px">
+     <div class="card-title" style="color:var(--warn)">IRP Calculator</div>
+     <div id="cia-form">
+      <div><label>Spot (S)</label><input id="cia-s" value="0.6500" oninput="calcCIA()"></div>
+      <div><label>r_domestic (%)</label><input id="cia-rd" value="5.25" oninput="calcCIA()"></div>
+      <div><label>r_foreign (%)</label><input id="cia-rf" value="4.35" oninput="calcCIA()"></div>
+      <div><label>T (years)</label><input id="cia-t" value="1.0" oninput="calcCIA()"></div>
+     </div>
+     <div><label style="font-size:.7rem;color:var(--muted)">Market Forward Quote</label>
+      <input id="cia-fm" value="0.6420" oninput="calcCIA()" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.85rem">
+     </div>
+    </div>
+    <div id="cia-result" style="font-size:.82rem;line-height:1.8">Enter values above to see result.</div>
+   </div>
+   <div class="card">
+    <div class="card-title" style="color:var(--navy)">The Arbitrage Mechanism</div>
+    <div class="card-body" style="font-size:.85rem;line-height:1.8">
+     If <strong>F_market &lt; F_IRP</strong> (forward is too cheap):<br>
+     ① Borrow foreign currency (e.g., AUD)<br>
+     ② Convert to domestic (USD) at spot<br>
+     ③ Lend domestic at r_domestic<br>
+     ④ Buy foreign forward at F_market<br>
+     → Earn risk-free profit at maturity<br><br>
+     <span class="chip chip-gain">Self-correcting</span> Arbitrageurs drive F_market → F_IRP until no profit remains. In liquid FX markets this takes <strong>seconds</strong>.
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s15-exercise: CIA Student Exercise (NEW) -->
+<div class="slide" id="s15-exercise">
+ <div class="stripe c2-stripe"></div>
+ <div style="width:100%;max-width:860px">
+  <div class="eyebrow">Section 2 — You Try It</div>
+  <div class="slide-title">CIA Exercise</div>
+  <div class="slide-sub">GBP/USD · Spot = 1.2500 · r<sub>USD</sub> = 5% · r<sub>GBP</sub> = 2% · T = 1 yr · Market Forward = 1.3000</div>
+  <div class="two-col" style="gap:18px;align-items:start">
+   <div>
+    <div class="card" style="margin-bottom:12px">
+     <div class="card-title">Answer the 5 questions:</div>
+     <div style="font-size:.85rem;line-height:2.3;color:var(--muted)">
+      <strong style="color:var(--text)">1.</strong> Which currency is <em>undervalued</em>?<br>
+      <strong style="color:var(--text)">2.</strong> Which currency is <em>overvalued</em>?<br>
+      <strong style="color:var(--text)">3.</strong> Which currency do you <em>borrow</em>?<br>
+      <strong style="color:var(--text)">4.</strong> Which currency do you <em>invest/lend</em>?<br>
+      <strong style="color:var(--text)">5.</strong> Profit per $1,000,000?
+     </div>
+    </div>
+    <button id="cia-ex-reveal" onclick="revealCIAExercise()" style="width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-weight:600;cursor:pointer;font-size:.9rem">Reveal Solution →</button>
+   </div>
+   <div class="card" id="cia-ex-answer" style="opacity:.06;pointer-events:none;transition:opacity .5s;border-color:var(--gain)">
+    <div class="card-title" style="color:var(--gain)">✓ Solution</div>
+    <div class="card-body" style="font-size:.82rem;line-height:2.0;font-family:'IBM Plex Mono',monospace">
+     F_IRP = 1.25 × 1.05/1.02 = <strong style="color:var(--teal)">1.2868</strong><br>
+     F_mkt 1.3000 &gt; 1.2868 → GBP <span class="hl-loss">overpriced</span><br><br>
+     1. Undervalued: <span class="hl-gain">USD</span><br>
+     2. Overvalued:  <span class="hl-loss">GBP</span><br>
+     3. Borrow: <span class="hl-gain">USD</span> @ 5%<br>
+     4. Invest: <span class="hl-gain">GBP</span> @ 2%<br><br>
+     $1M → £800,000 @ spot<br>
+     £800,000 × 1.02 = £816,000<br>
+     Sell £816,000 fwd @ 1.30 = $1,060,800<br>
+     Repay: $1,050,000<br>
+     <strong>Profit: <span class="hl-gain">$10,800</span></strong>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- s13: Discussion -->
+<div class="slide" id="s13-disc">
+ <div class="stripe c3-stripe"></div>
+ <div style="width:100%;max-width:720px">
+  <div class="eyebrow">Part 2 — Discussion</div>
+  <div class="slide-title">What Did We Find?</div>
+  <div class="slide-sub">Three questions to bring it all together.</div>
+  <div class="disc-q">① <strong>Shape of the curve:</strong> Why does the forward rate diverge from spot as maturity increases? Which pair shows the largest deviation — and why?</div>
+  <div class="disc-q">② <strong>Market efficiency:</strong> If you found a market forward that differed from your IRP-implied rate by 0.005, could you profit? What would happen next?</div>
+  <div class="disc-q">③ <strong>Covered Interest Parity Puzzle:</strong> After the 2008 financial crisis, the EUR/USD basis turned persistently negative — meaning F_market &lt; F_IRP, even in large liquid markets. Why didn't arbitrageurs eliminate this?</div>
+ </div>
+</div>
+
+<!-- s17: What We Learned -->
+<div class="slide" id="s12">
+ <div style="width:100%;max-width:840px">
+  <div style="text-align:center;margin-bottom:26px">
+   <div class="eyebrow">Summary</div>
+   <div class="slide-title">What We Learned</div>
+  </div>
+  <div class="learned-grid">
+   <div class="learned-item"><div class="learned-num">01</div><div class="learned-text"><strong>Rates drive FX:</strong> Higher domestic rates attract capital inflows → domestic currency appreciates.</div></div>
+   <div class="learned-item"><div class="learned-num">02</div><div class="learned-text"><strong>IRP formula:</strong> F = S × (1 + i<sub>quote</sub>·T) / (1 + i<sub>base</sub>·T) gives the no-arbitrage forward rate.</div></div>
+   <div class="learned-item"><div class="learned-num">03</div><div class="learned-text"><strong>Covered arb:</strong> If the market forward deviates from F_IRP, a risk-free profit exists — until arbitrageurs close the gap.</div></div>
+   <div class="learned-item"><div class="learned-num">04</div><div class="learned-text"><strong>Forward curves:</strong> IRP implies a full term structure — higher rate differentials create steeper forward curves.</div></div>
+   <div class="learned-item"><div class="learned-num">05</div><div class="learned-text"><strong>Multinational use:</strong> Firms use IRP-implied forwards to eliminate FX uncertainty on future payables and receivables.</div></div>
+   <div class="learned-item"><div class="learned-num">06</div><div class="learned-text"><strong>Real-world limits:</strong> Post-GFC, the covered interest parity puzzle showed that market frictions can sustain temporary IRP deviations.</div></div>
+  </div>
+ </div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div id="nav-dots"></div>
+<div class="nav-arr" id="prev-btn" onclick="navigate(-1)">‹</div>
+<div class="nav-arr" id="next-btn" onclick="navigate(1)">›</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const FB_CONFIG = {
+  apiKey:"AIzaSyAjHL3MztreUN7J7QKW3q_nRbiNoxLwA0E",
+  authDomain:"fina402-60e86.firebaseapp.com",
+  projectId:"fina402-60e86",
+  storageBucket:"fina402-60e86.firebasestorage.app",
+  messagingSenderId:"1058911893067",
+  appId:"1:1058911893067:web:0ab85f8a600d4fb8d2ffce"
+};
+const COLLECTION = 'lec5_irp';
+let DB = null;
+
+const MARKET = {
+  1:{label:'EUR/USD', S:1.0850, rd:0.0525, rf:0.0375, tol:0.0005, color:'#1D4ED8', size:13},
+  2:{label:'GBP/USD', S:1.2700, rd:0.0525, rf:0.0500, tol:0.0005, color:'#0891B2', size:13},
+  3:{label:'USD/JPY', S:149.50, rd:0.0010, rf:0.0525, tol:0.05,   color:'#15803D', size:14}
+};
+
+const MATURITIES_13 = [0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25];
+const MATURITIES_14 = [0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25,3.5];
+
+const ROSTER = {
+  "Alcina, Kiara M.":           {g:1,T:MATURITIES_13[0]},
+  "Broz, Elisa":                {g:1,T:MATURITIES_13[1]},
+  "Dutrey, Quinn S.":           {g:1,T:MATURITIES_13[2]},
+  "Gonzalez, Mazzaria":         {g:1,T:MATURITIES_13[3]},
+  "He, Honghui":                {g:1,T:MATURITIES_13[4]},
+  "Klein, Cameron J.":          {g:1,T:MATURITIES_13[5]},
+  "Marley, Margaret T.":        {g:1,T:MATURITIES_13[6]},
+  "Medina Brambila, Edelberto": {g:1,T:MATURITIES_13[7]},
+  "Meng, Xiangyang":            {g:1,T:MATURITIES_13[8]},
+  "Mulkerrins, Colin R.":       {g:1,T:MATURITIES_13[9]},
+  "Park, Ethan Q.":             {g:1,T:MATURITIES_13[10]},
+  "Ramani, Sahil H.":           {g:1,T:MATURITIES_13[11]},
+  "Singer, Noah R.":            {g:1,T:MATURITIES_13[12]},
+  "Bae, Kristy Y.":             {g:2,T:MATURITIES_13[0]},
+  "Burke, Ryan P.":             {g:2,T:MATURITIES_13[1]},
+  "Gaeta Garcia, Sofia":        {g:2,T:MATURITIES_13[2]},
+  "Gonzalez Salgado, Candela":  {g:2,T:MATURITIES_13[3]},
+  "Hein, Dawson P.":            {g:2,T:MATURITIES_13[4]},
+  "Lee, Brandon C.":            {g:2,T:MATURITIES_13[5]},
+  "Mass, Grant H.":             {g:2,T:MATURITIES_13[6]},
+  "Megahan, Lauren E.":         {g:2,T:MATURITIES_13[7]},
+  "Montoya, Joaquin":           {g:2,T:MATURITIES_13[8]},
+  "Myers, Ana P.":              {g:2,T:MATURITIES_13[9]},
+  "Pasquini, Sasha M.":         {g:2,T:MATURITIES_13[10]},
+  "Riveiro Gasca, Carlos":      {g:2,T:MATURITIES_13[11]},
+  "Skvarca, Sophia M.":         {g:2,T:MATURITIES_13[12]},
+  "Barcia Lopez, Aitana":       {g:3,T:MATURITIES_14[0]},
+  "Delgado Marin, Elsa":        {g:3,T:MATURITIES_14[1]},
+  "Gard, Griffin M.":           {g:3,T:MATURITIES_14[2]},
+  "Guerrido, Daniel A.":        {g:3,T:MATURITIES_14[3]},
+  "Kennison, Isabella E.":      {g:3,T:MATURITIES_14[4]},
+  "Longaker, M Z.":             {g:3,T:MATURITIES_14[5]},
+  "McCain, John R.":            {g:3,T:MATURITIES_14[6]},
+  "Mendez, Brody J.":           {g:3,T:MATURITIES_14[7]},
+  "Moon, Jackson A.":           {g:3,T:MATURITIES_14[8]},
+  "Ortiz, Genesis":             {g:3,T:MATURITIES_14[9]},
+  "Price, Ariene":              {g:3,T:MATURITIES_14[10]},
+  "Scholl, Nicolette L.":       {g:3,T:MATURITIES_14[11]},
+  "von Gillern, Katie B.":      {g:3,T:MATURITIES_14[12]},
+  "Wrench, Alexandra J.":       {g:3,T:MATURITIES_14[13]}
+};
+
+const ALL_NAMES = Object.keys(ROSTER).sort((a,b)=>a.localeCompare(b));
+
+const DOT_C = ['','c1','c1','c1','c1','c1','c1','c1','c3','c3','c3','c2','c2','c2','c2','c2','c3',''];
+const SLIDE_LABELS = ['Title','FX Risk Poll','Importer Problem','Foreign CF','Example 1',
+  'IRP Formula','Brazil BRL','Japan JPY','Group Assignment','Your Workspace',
+  'Live IRP Curves','Multinational Case','Hedge Scenarios','Spot Arbitrage',
+  'CIA Calculator','CIA Exercise','Discussion','What We Learned'];
+const N = 18;
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let cur = 0;
+let myName = null, myGroup = null, myT = null;
+let isInstructor = false;
+let STUDENT_CODE = 'IRP2026';
+let INSTR_PIN = 'PROF405';
+let charts = {1:null,2:null,3:null};
+let chartsReady = false;
+let unsubscribe = null;
+
+// ─── FIREBASE ─────────────────────────────────────────────────────────────────
+function initFirebase(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    DB = firebase.firestore();
+    loadConfig();
+  }catch(e){console.warn('Firebase init failed:',e)}
+}
+
+async function loadConfig(){
+  if(!DB) return;
+  try{
+    const doc = await DB.collection(COLLECTION).doc('config').get();
+    if(doc.exists){
+      const d = doc.data();
+      if(d.studentCode) STUDENT_CODE = d.studentCode.toUpperCase();
+      if(d.instructorPin) INSTR_PIN = d.instructorPin;
+    }
+  }catch(e){}
+}
+
+async function saveConfig(){
+  if(!DB) return;
+  try{ await DB.collection(COLLECTION).doc('config').set({studentCode:STUDENT_CODE,instructorPin:INSTR_PIN},{merge:true}); }catch(e){}
+}
+
+// ─── GATE ─────────────────────────────────────────────────────────────────────
+function gateTab(mode){
+  const isStu = mode==='student';
+  document.getElementById('stu-fields').style.display = isStu?'block':'none';
+  document.getElementById('prof-fields').style.display = isStu?'none':'block';
+  document.getElementById('tab-stu').classList.toggle('on', isStu);
+  document.getElementById('tab-prof').classList.toggle('on', !isStu);
+}
+
+function populateNames(){
+  const sel = document.getElementById('gate-name');
+  ALL_NAMES.forEach(n=>{
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n; sel.appendChild(o);
+  });
+}
+
+async function gateSubmit(){
+  const errEl = document.getElementById('gate-err');
+  errEl.textContent=''; errEl.style.display='none';
+
+  const isProf = document.getElementById('tab-prof').classList.contains('on');
+  if(isProf){
+    const pin = document.getElementById('gate-pin').value.trim().toUpperCase();
+    if(pin !== INSTR_PIN.toUpperCase()){errEl.textContent='Incorrect PIN.';errEl.style.display='block';return;}
+    isInstructor = true;
+    enterDeck();
+    return;
+  }
+
+  const code = document.getElementById('gate-code').value.trim().toUpperCase();
+  const name = document.getElementById('gate-name').value;
+  if(!name){errEl.textContent='Please select your name.';errEl.style.display='block';return;}
+  if(code !== STUDENT_CODE.toUpperCase()){errEl.textContent='Incorrect class code. Check with your professor.';errEl.style.display='block';return;}
+
+  const confirmed = confirm('You selected:\n\n' + name + '\n\nAre you sure? You cannot change your name once you enter.');
+  if(!confirmed) return;
+
+  myName = name;
+  const info = ROSTER[name];
+  if(info){ myGroup = info.g; myT = info.T; }
+
+  if(DB){
+    try{
+      await DB.collection(COLLECTION).doc('participants').set(
+        {[name]:{name,group:myGroup,maturity:myT,joinedAt:firebase.firestore.FieldValue.serverTimestamp()}},
+        {merge:true}
+      );
+    }catch(e){}
+  }
+  enterDeck();
+}
+
+function enterDeck(){
+  document.getElementById('gate').style.display='none';
+  if(isInstructor){
+    document.getElementById('settings-btn').style.display='block';
+  }
+  buildNav();
+  goTo(0);
+  startListening();
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function buildNav(){
+  const wrap = document.getElementById('nav-dots');
+  wrap.innerHTML='';
+  DOT_C.forEach((c,i)=>{
+    const d = document.createElement('div');
+    d.className='dot'+(c?' '+c:'');
+    d.title=SLIDE_LABELS[i];
+    d.onclick=()=>goTo(i);
+    const tip=document.createElement('div');
+    tip.className='dot-tip';tip.textContent=SLIDE_LABELS[i];
+    d.appendChild(tip);
+    wrap.appendChild(d);
+  });
+}
+
+function goTo(i){
+  if(i<0||i>=N) return;
+  document.querySelectorAll('.slide').forEach((s,j)=>{
+    s.classList.toggle('active',j===i);
+  });
+  document.querySelectorAll('.dot').forEach((d,j)=>{
+    d.classList.toggle('active',j===i);
+  });
+  cur=i;
+  const sn=document.getElementById('slide-num'); if(sn) sn.textContent=(i+1)+' / '+N;
+  onEnter(i);
+}
+
+function navigate(dir){goTo(cur+dir);}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') navigate(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') navigate(-1);
+});
+
+// ─── KATEX ────────────────────────────────────────────────────────────────────
+function rk(id,expr,display=false){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const run=()=>{try{window.katex.render(expr,el,{displayMode:display,throwOnError:false});}catch(e){}};
+  if(window.katex) run();
+  else document.getElementById('katex-js').addEventListener('load',run);
+}
+
+// ─── SLIDE-SPECIFIC INIT ─────────────────────────────────────────────────────
+function onEnter(i){
+  if(i===4) rk('rk-ex1','F = 1.0850 \\times \\dfrac{1 + 0.05 \\times 1}{1 + 0.03 \\times 1} = 1.0850 \\times \\dfrac{1.05}{1.03} = 1.1061',true);
+  if(i===5){
+    rk('rk-irp','F = S \\times \\dfrac{1 + r_d \\cdot T}{1 + r_f \\cdot T}',true);
+    rk('rk-irp2','F = S \\times \\dfrac{1 + i_{quote} \\cdot T}{1 + i_{base} \\cdot T}',true);
+  }
+  if(i===6){ initBrazilChart(); rk('rk-brl','F = S \\times \\dfrac{1 + i_{quote} \\cdot T}{1 + i_{base} \\cdot T} = 5.20 \\times \\dfrac{1 + 0.1475 \\cdot T}{1 + 0.0525 \\cdot T}',true); }
+  if(i===7){ initJapanChart(); rk('rk-jpy','F = S \\times \\dfrac{1 + i_{quote} \\cdot T}{1 + i_{base} \\cdot T} = 149.50 \\times \\dfrac{1 + 0.001 \\cdot T}{1 + 0.0525 \\cdot T}',true); }
+  if(i===8) buildGroupLists();
+  if(i===9) buildWorkspace();
+  if(i===10) initCharts();
+  if(i===11) rk('rk-mn','F(18\\text{M}) = 1.0850 \\times \\dfrac{1 + 0.0525 \\times 1.5}{1 + 0.0375 \\times 1.5}',true);
+  if(i===14) calcCIA();
+  if(i===1) startPollListener();
+}
+
+// ─── IRP FORMULA ──────────────────────────────────────────────────────────────
+function calcIRP(S,rd,rf,T){return S*(1+rd*T)/(1+rf*T);}
+
+// ─── CIA CALCULATOR ───────────────────────────────────────────────────────────
+function calcCIA(){
+  const S=parseFloat(document.getElementById('cia-s').value);
+  const rd=parseFloat(document.getElementById('cia-rd').value)/100;
+  const rf=parseFloat(document.getElementById('cia-rf').value)/100;
+  const T=parseFloat(document.getElementById('cia-t').value);
+  const Fm=parseFloat(document.getElementById('cia-fm').value);
+  const res=document.getElementById('cia-result');
+  if([S,rd,rf,T,Fm].some(isNaN)){res.textContent='—';return;}
+  const Firp=calcIRP(S,rd,rf,T);
+  const dev=(Fm-Firp);
+  const pips=Math.abs(dev)*10000;
+  const pct=Math.abs(dev/Firp)*100;
+  let signal,color;
+  if(Math.abs(dev)<0.0001){signal='✓ No arbitrage — market is at IRP parity';color='var(--gain)';}
+  else if(Fm<Firp){signal='⚡ F_market BELOW IRP → Buy forward cheap → CIA profit';}
+  else{signal='⚡ F_market ABOVE IRP → Sell forward expensive → reversed CIA';}
+  res.innerHTML=`F<sub>IRP</sub> = <strong>${Firp.toFixed(5)}</strong>
+F<sub>market</sub> = ${Fm.toFixed(5)}
+Gap = ${dev>=0?'+':''}${dev.toFixed(5)} (${pips.toFixed(1)} pips · ${pct.toFixed(3)}%)
+<span style="color:${color||'var(--warn)'};font-weight:600">${signal}</span>`;
+}
+
+// ─── GROUP LISTS (s8) ─────────────────────────────────────────────────────────
+function buildGroupLists(){
+  [1,2,3].forEach(g=>{
+    const el=document.getElementById('g'+g+'-names');
+    if(!el) return;
+    const entries=Object.entries(ROSTER).filter(([,v])=>v.g===g);
+    el.innerHTML=entries.map(([name,{T}])=>{
+      const months=Math.round(T*12);
+      const short=name.split(',')[0];
+      const isMe=name===myName;
+      return `<div style="${isMe?'color:var(--gain);font-weight:600':''}">
+        ${isMe?'→ ':''}<strong>${short}</strong> · ${months}M ${isMe?'← you':''}
+      </div>`;
+    }).join('');
+  });
+}
+
+// ─── WORKSPACE (s9) ───────────────────────────────────────────────────────────
+function buildWorkspace(){
+  if(!myName){
+    document.getElementById('ws-not-entered').style.display='block';
+    document.getElementById('ws-content').style.display='none';
+    return;
+  }
+  document.getElementById('ws-not-entered').style.display='none';
+  document.getElementById('ws-content').style.display='block';
+  const g=myGroup, m=MARKET[g];
+  const months=Math.round(myT*12);
+  document.getElementById('ws-pair').textContent=m.label;
+  const badge=document.getElementById('ws-group-badge');
+  badge.textContent='Group '+g;
+  badge.style.background=m.color;
+  document.getElementById('ws-spot').textContent=m.S.toFixed(4);
+  document.getElementById('ws-rd').textContent=(m.rd*100).toFixed(2)+'% p.a.';
+  document.getElementById('ws-rf').textContent=(m.rf*100).toFixed(2)+'% p.a.';
+  document.getElementById('ws-maturity').textContent=months+'M (T = '+myT.toFixed(2)+' yrs)';
+  // Labels: for USD/JPY, quote=JPY (numerator) and base=USD (denominator)
+  const rdLbl=document.getElementById('ws-rd-label');
+  const rfLbl=document.getElementById('ws-rf-label');
+  if(g===3){
+    if(rdLbl) rdLbl.innerHTML='r<sub>JPY</sub> (i<sub>quote</sub>)';
+    if(rfLbl) rfLbl.innerHTML='r<sub>USD</sub> (i<sub>base</sub>)';
+  } else {
+    if(rdLbl) rdLbl.innerHTML='r<sub>USD</sub> (i<sub>quote</sub>)';
+    if(rfLbl) rfLbl.innerHTML='r<sub>EUR/GBP</sub> (i<sub>base</sub>)';
+  }
+}
+
+// ─── SUBMIT ANSWER ────────────────────────────────────────────────────────────
+async function submitAnswer(){
+  const fb=document.getElementById('ws-feedback');
+  const val=parseFloat(document.getElementById('ws-answer').value);
+  if(isNaN(val)){
+    fb.style.display='block';fb.className='fb-err';
+    fb.textContent='Please enter a valid number.';return;
+  }
+  const m=MARKET[myGroup];
+  const correct_val=calcIRP(m.S,m.rd,m.rf,myT);
+  const ok=Math.abs(val-correct_val)<=m.tol;
+  const months=Math.round(myT*12);
+
+  if(DB){
+    try{
+      await DB.collection(COLLECTION).doc('submissions').set({
+        [myName+'_'+months+'M']:{
+          student:myName,group:myGroup,currency:m.label,
+          maturityMonths:months,T:myT,value:val,
+          correct:ok,correctValue:correct_val,
+          ts:firebase.firestore.FieldValue.serverTimestamp()
+        }
+      },{merge:true});
+    }catch(e){}
+  }
+
+  if(ok){
+    fb.style.display='block';fb.className='fb-ok';
+    fb.textContent='✓ Correct! F('+months+'M) = '+val.toFixed(4)+' — your point is now on the curve!';
+    document.getElementById('ws-submit-btn').disabled=true;
+    document.getElementById('ws-already-done').style.display='block';
+  } else {
+    fb.style.display='block';fb.className='fb-err';
+    const hint=Math.abs(val-correct_val);
+    fb.textContent='✗ Not quite. You\'re off by '+hint.toFixed(4)+'. Check your T value (T='+myT.toFixed(2)+') and recompute.';
+  }
+}
+
+// ─── CHARTS (s10) ─────────────────────────────────────────────────────────────
+function irpLine(g){
+  const m=MARKET[g];
+  const mats=g===3?MATURITIES_14:MATURITIES_13;
+  return mats.map(T=>({x:Math.round(T*12), y:parseFloat(calcIRP(m.S,m.rd,m.rf,T).toFixed(5))}));
+}
+
+function initCharts(){
+  if(chartsReady) return;
+  chartsReady=true;
+  [1,2,3].forEach(g=>{
+    const ctx=document.getElementById('chart-g'+g).getContext('2d');
+    const line=irpLine(g);
+    const m=MARKET[g];
+    charts[g]=new Chart(ctx,{
+      data:{
+        datasets:[
+          {type:'line',label:'IRP (theoretical)',data:line,borderColor:m.color,
+           borderWidth:1.5,pointRadius:2,fill:false,tension:0},
+          {type:'scatter',label:'Student submissions',data:[],
+           backgroundColor:m.color,pointRadius:6,pointHoverRadius:8}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{display:false},tooltip:{callbacks:{
+          label:(ctx)=>ctx.datasetIndex===1
+            ?'F('+ctx.parsed.x+'M) = '+ctx.parsed.y.toFixed(4)
+            :null
+        }}},
+        scales:{
+          x:{title:{display:true,text:'Maturity (months)',font:{size:9}},
+             ticks:{font:{size:9}}},
+          y:{title:{display:true,text:m.label,font:{size:9}},
+             ticks:{font:{size:9},callback:v=>v.toFixed(4)}}
+        }
+      }
+    });
+  });
+}
+
+function addPointToChart(group,months,value){
+  if(!charts[group]) return;
+  const ds=charts[group].data.datasets[1];
+  const exists=ds.data.find(p=>p.x===months);
+  if(!exists){
+    ds.data.push({x:months,y:parseFloat(value.toFixed(5))});
+    ds.data.sort((a,b)=>a.x-b.x);
+    charts[group].update('none');
+  }
+}
+
+// ─── BRAZIL CHART (s6-brl) ────────────────────────────────────────────────────
+let brazilChart = null;
+function initBrazilChart(){
+  if(brazilChart) return;
+  const ctx = document.getElementById('chart-brl');
+  if(!ctx) return;
+  const pts = [0,1,2,3,4,5,6,7,8,9,10];
+  const S=5.20, iBase=0.0525, iQuote=0.1475;
+  const data = pts.map(T=>({x:T, y:parseFloat((S*(1+iQuote*T)/(1+iBase*T)).toFixed(4))}));
+  brazilChart = new Chart(ctx.getContext('2d'),{
+    type:'line',
+    data:{datasets:[{label:'IRP Forward USD/BRL',data,borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,.08)',fill:true,tension:0.2,pointRadius:4,borderWidth:2.5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'F('+c.parsed.x+'yr) = '+c.parsed.y.toFixed(4)+' BRL/USD'}}},
+      scales:{
+        x:{title:{display:true,text:'Maturity (years)',font:{size:10}},ticks:{font:{size:9}},min:0,max:10,type:'linear'},
+        y:{title:{display:true,text:'BRL per USD',font:{size:10}},ticks:{font:{size:9},callback:v=>v.toFixed(2)}}
+      }
+    }
+  });
+}
+
+// ─── JAPAN CHART (s7-jpy) ────────────────────────────────────────────────────
+let japanChart = null;
+function initJapanChart(){
+  if(japanChart) return;
+  const ctx = document.getElementById('chart-jpy');
+  if(!ctx) return;
+  const pts = [0,1,2,3,4,5,6,7,8,9,10];
+  const S=149.50, iBase=0.0525, iQuote=0.001;
+  const data = pts.map(T=>({x:T, y:parseFloat((S*(1+iQuote*T)/(1+iBase*T)).toFixed(4))}));
+  japanChart = new Chart(ctx.getContext('2d'),{
+    type:'line',
+    data:{datasets:[{label:'IRP Forward USD/JPY',data,borderColor:'#1D4ED8',backgroundColor:'rgba(29,78,216,.07)',fill:true,tension:0.2,pointRadius:4,borderWidth:2.5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'F('+c.parsed.x+'yr) = '+c.parsed.y.toFixed(2)+' JPY/USD'}}},
+      scales:{
+        x:{title:{display:true,text:'Maturity (years)',font:{size:10}},ticks:{font:{size:9}},min:0,max:10,type:'linear'},
+        y:{title:{display:true,text:'JPY per USD',font:{size:10}},ticks:{font:{size:9},callback:v=>v.toFixed(0)}}
+      }
+    }
+  });
+}
+
+// ─── POLL FUNCTIONS (s1-poll) ─────────────────────────────────────────────────
+let pollListenerStarted = false;
+let myPollAnswers = {A: null, B: null};
+
+function startPollListener(){
+  if(!DB || pollListenerStarted) return;
+  pollListenerStarted = true;
+  DB.collection(COLLECTION).doc('poll_fxrisk').onSnapshot(doc=>{
+    if(!doc.exists) return;
+    const d = doc.data();
+    const vals = Object.values(d);
+    let aApp=0,aDep=0,bApp=0,bDep=0;
+    vals.forEach(v=>{
+      if(v.A==='appreciates') aApp++; else if(v.A==='depreciates') aDep++;
+      if(v.B==='appreciates') bApp++; else if(v.B==='depreciates') bDep++;
+    });
+    const aTotal=aApp+aDep, bTotal=bApp+bDep;
+    updatePollBar('a-app',aApp,aTotal);
+    updatePollBar('a-dep',aDep,aTotal);
+    updatePollBar('b-app',bApp,bTotal);
+    updatePollBar('b-dep',bDep,bTotal);
+    const pStat=document.getElementById('poll-status');
+    if(pStat) pStat.textContent=(Math.max(aTotal,bTotal))+' response(s) received';
+    ['poll-a-bar','poll-b-bar'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='block';
+    });
+    if(isInstructor){const rb=document.getElementById('reveal-poll-btn');if(rb) rb.style.display='inline-block';}
+  });
+}
+
+function updatePollBar(id,count,total){
+  const pct=total===0?0:Math.round(count/total*100);
+  const barEl=document.getElementById('p'+id+'-bar');
+  const pctEl=document.getElementById('p'+id+'-pct');
+  if(barEl) barEl.style.width=pct+'%';
+  if(pctEl) pctEl.textContent=pct+'% ('+count+')';
+}
+
+async function submitPoll(question, answer){
+  if(!myName){ alert('Please enter class first.'); return; }
+  if(myPollAnswers[question]){return;} // already answered
+  myPollAnswers[question] = answer;
+  // Highlight selected button
+  const btnsId = question==='A'?'qa-btns':'qb-btns';
+  const btns = document.querySelectorAll('#'+btnsId+' button');
+  btns.forEach(b=>{
+    const isSelected = b.textContent.toLowerCase().includes(answer.toLowerCase());
+    b.style.background = isSelected ? 'var(--navy)' : 'var(--surface)';
+    b.style.color = isSelected ? '#fff' : '';
+    b.style.borderColor = isSelected ? 'var(--navy)' : 'var(--border)';
+    b.disabled = true;
+  });
+  if(DB && myName){
+    try{
+      await DB.collection(COLLECTION).doc('poll_fxrisk').set(
+        {[myName]: {...myPollAnswers, ts: firebase.firestore.FieldValue.serverTimestamp()}},
+        {merge:true}
+      );
+    }catch(e){}
+  }
+}
+
+function revealPollAnswers(){
+  document.getElementById('pa-correct').style.display='block';
+  document.getElementById('pb-correct').style.display='block';
+}
+
+// ─── CIA EXERCISE REVEAL ─────────────────────────────────────────────────────
+function revealCIAExercise(){
+  const ans=document.getElementById('cia-ex-answer');
+  if(ans){ans.style.opacity='1';ans.style.pointerEvents='all';}
+  const btn=document.getElementById('cia-ex-reveal');
+  if(btn) btn.style.display='none';
+}
+
+// ─── FIREBASE LISTENER ────────────────────────────────────────────────────────
+function startListening(){
+  if(!DB) return;
+  unsubscribe = DB.collection(COLLECTION).doc('submissions')
+    .onSnapshot(doc=>{
+      if(!doc.exists) return;
+      const data=doc.data();
+      const counts={1:0,2:0,3:0};
+      let total=0,correct=0;
+      Object.values(data).forEach(s=>{
+        if(!s||!s.group) return;
+        total++;
+        counts[s.group]=(counts[s.group]||0);
+        if(s.correct){
+          correct++;
+          counts[s.group]++;
+          if(chartsReady) addPointToChart(s.group,s.maturityMonths,s.value);
+        }
+      });
+      // Update counters
+      [1,2,3].forEach(g=>{
+        const el=document.getElementById('count-g'+g);
+        if(el) el.textContent=counts[g]+' / '+MARKET[g].size+' submitted';
+      });
+      document.getElementById('count-correct').textContent=correct;
+      document.getElementById('count-total').textContent=total;
+      // Update roster (participants)
+      updateRosterPanel();
+      // Progress label
+      const tot=MARKET[1].size+MARKET[2].size+MARKET[3].size;
+      const pctDone=Math.round(correct/tot*100);
+      const prog=document.getElementById('chart-progress');
+      if(prog) prog.textContent=correct===tot
+        ?'All '+tot+' curves complete! 🎉'
+        :correct+' / '+tot+' points plotted ('+pctDone+'%)';
+    });
+
+  // Listen for participants
+  DB.collection(COLLECTION).doc('participants').onSnapshot(doc=>{
+    if(!doc.exists){
+      const chips=document.getElementById('roster-chips');if(chips)chips.innerHTML='';
+      const rl=document.getElementById('roster-list');if(rl)rl.innerHTML='';
+      return;
+    }
+    const data=doc.data();
+    const chips=document.getElementById('roster-chips');
+    if(chips){
+      chips.innerHTML='';
+      Object.values(data).forEach(p=>{
+        const c=document.createElement('div');
+        c.className='stu-chip here';
+        c.textContent=p.name.split(',')[0];
+        chips.appendChild(c);
+      });
+    }
+    document.getElementById('count-present').textContent=Object.keys(data).length;
+    updateRosterPanel(data);
+  });
+}
+
+function updateRosterPanel(participants){
+  if(!isInstructor) return;
+  const el=document.getElementById('roster-list');
+  if(!el) return;
+  if(!participants){
+    if(!DB) return;
+    return;
+  }
+  el.innerHTML=Object.values(participants).map(p=>{
+    const g=p.group||'?';
+    const short=p.name.split(',')[0];
+    const months=p.maturity?Math.round(p.maturity*12)+'M':'—';
+    return `<div class="roster-entry">
+      <span>${short}</span>
+      <span>
+        <span class="g-badge g${g}b">G${g}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;margin-left:4px">${months}</span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+// ─── INSTRUCTOR PANEL ────────────────────────────────────────────────────────
+function openSettings(){
+  document.getElementById('settings').classList.add('open');
+  document.getElementById('cur-code-display').textContent=STUDENT_CODE;
+}
+function closeSettings(){document.getElementById('settings').classList.remove('open');}
+
+async function changeCode(){
+  const inp=document.getElementById('new-code-input');
+  const code=(inp.value||'').trim().toUpperCase();
+  if(!code) return;
+  STUDENT_CODE=code;
+  await saveConfig();
+  document.getElementById('cur-code-display').textContent=code;
+  inp.value='';
+  const msg=document.createElement('div');
+  msg.style.cssText='font-size:.7rem;color:var(--gain);margin-top:4px';
+  msg.textContent='✓ Code updated to '+code;
+  inp.parentNode.appendChild(msg);
+  setTimeout(()=>msg.remove(),2500);
+}
+
+async function resetSubmissions(){
+  if(!DB||!confirm('Reset ALL data (submissions, participants, poll)? This cannot be undone.')) return;
+  await Promise.all([
+    DB.collection(COLLECTION).doc('submissions').delete(),
+    DB.collection(COLLECTION).doc('participants').delete(),
+    DB.collection(COLLECTION).doc('poll_fxrisk').delete(),
+  ]);
+  [1,2,3].forEach(g=>{
+    if(charts[g]){charts[g].data.datasets[1].data=[];charts[g].update();}
+  });
+  // Clear local poll state
+  myPollAnswers={A:null,B:null};
+  pollListenerStarted=false;
+  ['poll-a-bar','poll-b-bar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  // Clear roster chips
+  const chips=document.getElementById('roster-chips');if(chips)chips.innerHTML='';
+  const rl=document.getElementById('roster-list');if(rl)rl.innerHTML='';
+  document.getElementById('count-correct').textContent='0';
+  document.getElementById('count-total').textContent='0';
+}
+
+// ─── IMPORTER SLIDE TIMER ────────────────────────────────────────────────────
+let impTimerInterval = null;
+function startImpTimer(){
+  if(impTimerInterval) return;
+  let secs = 180;
+  const el = document.getElementById('imp-timer');
+  if(!el) return;
+  impTimerInterval = setInterval(()=>{
+    secs--;
+    const m=Math.floor(secs/60), s=secs%60;
+    el.textContent=(m+':'+String(s).padStart(2,'0'));
+    if(secs<=30){el.style.color='var(--loss)';}
+    if(secs<=0){clearInterval(impTimerInterval);el.textContent='⏰ Time!';}
+  },1000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+populateNames();
+initFirebase();
+</script>
+</body>
+</html>
