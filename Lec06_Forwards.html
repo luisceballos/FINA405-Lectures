@@ -165,7 +165,7 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
   <button class="set-btn" onclick="changeCode()">Set</button>
  </div>
  <div class="set-note">Current: <span id="cur-code-display" style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">—</span></div>
- <h3>Participants (<span id="count-present">0</span> / 40)</h3>
+ <h3>Participants (<span id="count-present">0</span> / 39)</h3>
  <div id="roster-list"></div>
  <h3 style="color:var(--loss)">Absent / Not Connected (<span id="count-absent">40</span>)</h3>
  <div id="absent-list" style="font-size:.72rem;line-height:1.75;max-height:130px;overflow-y:auto;color:var(--muted)"></div>
@@ -310,10 +310,24 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
      <!-- Q3 -->
      <div class="card" style="border-top:3px solid var(--gain)">
       <div class="card-title" style="color:var(--gain)">Q3 (1 pt) — Approximate CIA profit per $1,000,000 invested (in USD)</div>
+      <details style="margin:8px 0 6px">
+       <summary style="cursor:pointer;font-size:.76rem;color:var(--teal);font-weight:600;user-select:none">&#128161; Step-by-step hints (click to expand)</summary>
+       <div style="margin-top:8px;padding:10px 14px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.2);border-radius:8px;font-size:.76rem;line-height:2;color:var(--muted)">
+        <strong style="color:var(--text)">Use your group's values shown in the banner above.</strong><br>
+        <span style="color:var(--navy)">&#9312;</span> <strong>Borrow $1,000,000 at r<sub>quote</sub> (USD):</strong> Repayment = $1M &times; (1 + r<sub>quote</sub>)<br>
+        <span style="color:var(--navy)">&#9313;</span> <strong>Convert to base currency at spot S:</strong> Base units = $1M &divide; S<br>
+        <span style="color:var(--navy)">&#9314;</span> <strong>Invest base units at r<sub>base</sub> for 1 yr:</strong> End value = (Base units) &times; (1 + r<sub>base</sub>)<br>
+        <span style="color:var(--navy)">&#9315;</span> <strong>Sell base forward at F<sub>mkt</sub>:</strong> USD proceeds = Step &#9314; &times; F<sub>mkt</sub><br>
+        <span style="color:var(--navy)">&#9316;</span> <strong>Profit = Step &#9315; proceeds &minus; Step &#9312; repayment</strong>
+       </div>
+      </details>
       <input class="ex-input" id="ex1-q3-input" type="number" placeholder="e.g. 50000" style="max-width:240px">
       <div id="ex1-q3-fb" class="ex-fb"></div>
      </div>
-     <button id="ex1-submit-btn" onclick="submitEx1()" style="margin-top:16px;padding:11px 28px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:600;cursor:pointer">Submit Exercise 1 →</button>
+     <div style="display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap">
+      <button id="ex1-submit-btn" onclick="submitEx1()" style="padding:11px 28px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:.9rem;font-weight:600;cursor:pointer">Submit Exercise 1 &#8594;</button>
+      <div id="ex1-tries-badge" style="font-size:.75rem;color:var(--muted)">Attempt 1 of 3</div>
+     </div>
      <div id="ex1-score-panel" style="display:none;margin-top:14px;padding:14px 18px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)">
       <div id="ex1-score-text" style="font-size:1.3rem;font-weight:700;color:var(--navy)"></div>
       <div id="ex1-score-sub" style="font-size:.82rem;color:var(--muted);margin-top:3px"></div>
@@ -858,48 +872,46 @@ let DB = null;
 
 // ─── ROSTER ───────────────────────────────────────────────────────────────────
 const MATURITIES_13=[0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25];
-const MATURITIES_14=[0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25,3.5];
 const ROSTER = {
-  "Alcina, Anna M.":            {g:1,T:MATURITIES_13[0]},
-  "Broz, Nicolas":              {g:1,T:MATURITIES_13[1]},
-  "Dutrey, Owen J.":            {g:1,T:MATURITIES_13[2]},
-  "Gonzalez M., Diego A.":      {g:1,T:MATURITIES_13[3]},
-  "He, Rui":                    {g:1,T:MATURITIES_13[4]},
-  "Klein, Zoe T.":              {g:1,T:MATURITIES_13[5]},
-  "Marley, William D.":         {g:1,T:MATURITIES_13[6]},
-  "Medina Brambila, Briana":    {g:1,T:MATURITIES_13[7]},
-  "Meng, Sophie Y.":            {g:1,T:MATURITIES_13[8]},
-  "Mulkerrins, Cillian J.":     {g:1,T:MATURITIES_13[9]},
-  "Park, Daniel K.":            {g:1,T:MATURITIES_13[10]},
-  "Ramani, Aman R.":            {g:1,T:MATURITIES_13[11]},
-  "Singer, Ella R.":            {g:1,T:MATURITIES_13[12]},
-  "Bae, Hyun Joo":              {g:2,T:MATURITIES_13[0]},
-  "Burke, William C.":          {g:2,T:MATURITIES_13[1]},
-  "Gaeta Garcia, Karla":        {g:2,T:MATURITIES_13[2]},
-  "Gonzalez Salgado, Allison":  {g:2,T:MATURITIES_13[3]},
-  "Hein, Charlotte M.":         {g:2,T:MATURITIES_13[4]},
-  "Lee, Timothy J.":            {g:2,T:MATURITIES_13[5]},
-  "Mass, Alexis P.":            {g:2,T:MATURITIES_13[6]},
-  "Megahan, Liam C.":           {g:2,T:MATURITIES_13[7]},
-  "Montoya, Isabella C.":       {g:2,T:MATURITIES_13[8]},
-  "Myers, Jayden R.":           {g:2,T:MATURITIES_13[9]},
-  "Pasquini, Giancarlo A.":     {g:2,T:MATURITIES_13[10]},
-  "Riveiro Gasca, Iker":        {g:2,T:MATURITIES_13[11]},
-  "Skvarca, Philip B.":         {g:2,T:MATURITIES_13[12]},
-  "Barcia Lopez, Irene":        {g:3,T:MATURITIES_14[0]},
-  "Delgado Marin, Diego":       {g:3,T:MATURITIES_14[1]},
-  "Gard, Griffin M.":           {g:3,T:MATURITIES_14[2]},
-  "Guerrido, Daniel A.":        {g:3,T:MATURITIES_14[3]},
-  "Kennison, Isabella E.":      {g:3,T:MATURITIES_14[4]},
-  "Longaker, M Z.":             {g:3,T:MATURITIES_14[5]},
-  "McCain, John R.":            {g:3,T:MATURITIES_14[6]},
-  "Mendez, Brody J.":           {g:3,T:MATURITIES_14[7]},
-  "Moon, Jackson A.":           {g:3,T:MATURITIES_14[8]},
-  "Ortiz, Genesis":             {g:3,T:MATURITIES_14[9]},
-  "Price, Ariene":              {g:3,T:MATURITIES_14[10]},
-  "Scholl, Nicolette L.":       {g:3,T:MATURITIES_14[11]},
-  "von Gillern, Katie B.":      {g:3,T:MATURITIES_14[12]},
-  "Wrench, Alexandra J.":       {g:3,T:MATURITIES_14[13]}
+  "Alcina, Kiara":              {g:1,T:MATURITIES_13[0]},
+  "Brambila, Eddie Medina":     {g:1,T:MATURITIES_13[1]},
+  "Broz, Elisa":                {g:1,T:MATURITIES_13[2]},
+  "Dutrey, Quinn":              {g:1,T:MATURITIES_13[3]},
+  "Feres, Mariana":             {g:1,T:MATURITIES_13[4]},
+  "He, Honghui":                {g:1,T:MATURITIES_13[5]},
+  "Klein, Cameron":             {g:1,T:MATURITIES_13[6]},
+  "Marley, Molly":              {g:1,T:MATURITIES_13[7]},
+  "Meng, Xiangyang":            {g:1,T:MATURITIES_13[8]},
+  "Mulkerrins, Colin":          {g:1,T:MATURITIES_13[9]},
+  "Park, Ethan":                {g:1,T:MATURITIES_13[10]},
+  "Ramani, Sahil":              {g:1,T:MATURITIES_13[11]},
+  "Singer, Noah":               {g:1,T:MATURITIES_13[12]},
+  "Bae, Kristy":                {g:2,T:MATURITIES_13[0]},
+  "Burke, Ryan":                {g:2,T:MATURITIES_13[1]},
+  "Garcia, Sofia Gaeta":        {g:2,T:MATURITIES_13[2]},
+  "Gasca, Carlos Riveiro":      {g:2,T:MATURITIES_13[3]},
+  "Hein, Dawson":               {g:2,T:MATURITIES_13[4]},
+  "Lee, Brandon":               {g:2,T:MATURITIES_13[5]},
+  "Mass, Grant":                {g:2,T:MATURITIES_13[6]},
+  "Megahan, Lauren":            {g:2,T:MATURITIES_13[7]},
+  "Montoya, Joaquin":           {g:2,T:MATURITIES_13[8]},
+  "Myers, Ana":                 {g:2,T:MATURITIES_13[9]},
+  "Pasquini, Sasha":            {g:2,T:MATURITIES_13[10]},
+  "Salgado, Candela Gonzalez":  {g:2,T:MATURITIES_13[11]},
+  "Skvarca, Sophia":            {g:2,T:MATURITIES_13[12]},
+  "Gard, Griffin":              {g:3,T:MATURITIES_13[0]},
+  "Gillern, Katie Von":         {g:3,T:MATURITIES_13[1]},
+  "Kennison, Isabella":         {g:3,T:MATURITIES_13[2]},
+  "Longaker, Zaley":            {g:3,T:MATURITIES_13[3]},
+  "Lopez, Aitana Barcia":       {g:3,T:MATURITIES_13[4]},
+  "Marin, Elsa Delgado":        {g:3,T:MATURITIES_13[5]},
+  "Mccain, John":               {g:3,T:MATURITIES_13[6]},
+  "Mendez, Brody":              {g:3,T:MATURITIES_13[7]},
+  "Moon, Jackson":              {g:3,T:MATURITIES_13[8]},
+  "Ortiz, Genesis":             {g:3,T:MATURITIES_13[9]},
+  "Price, Ariene":              {g:3,T:MATURITIES_13[10]},
+  "Scholl, Nicki":              {g:3,T:MATURITIES_13[11]},
+  "Wrench, AJ":                 {g:3,T:MATURITIES_13[12]}
 };
 const ALL_NAMES = Object.keys(ROSTER).sort((a,b)=>a.localeCompare(b));
 
