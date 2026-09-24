@@ -189,6 +189,7 @@ canvas{max-width:100%}
   <button class="btn-primary" onclick="gateSubmit()">Enter Class →</button>
  </div>
 </div>
+<script>/* review-mode bypass */if(new URLSearchParams(location.search).get('mode')==='review')document.getElementById('gate').style.display='none';</script>
 
 <!-- INSTRUCTOR SETTINGS -->
 <div id="settings">
@@ -202,13 +203,21 @@ canvas{max-width:100%}
  </div>
  <div class="set-note">Current: <span id="cur-code-display" style="font-family:'IBM Plex Mono',monospace;color:var(--teal)">—</span></div>
  <h3>Participants (<span id="count-present">0</span> / 40)</h3>
- <div id="roster-list"></div>
+ <div id="roster-list" style="font-size:.74rem;line-height:1.9;max-height:180px;overflow-y:auto"></div>
+ <h3 style="margin-top:18px;color:var(--loss)">Absent / Not Connected (<span id="count-absent">40</span>)</h3>
+ <div id="absent-list" style="font-size:.72rem;line-height:1.75;max-height:150px;overflow-y:auto;color:var(--muted)"></div>
  <h3 style="margin-top:18px">Submissions</h3>
  <div class="set-note"><span id="count-correct">0</span> correct · <span id="count-total">0</span> submitted</div>
  <button class="set-btn" onclick="resetSubmissions()" style="margin-top:6px;background:var(--loss)">Reset All Submissions</button>
  <h3 style="margin-top:18px">CIA Exercise Scores</h3>
  <button class="set-btn" onclick="loadCIAScores()" style="margin-bottom:6px">Refresh</button>
  <div id="cia-scores-list" style="font-size:.72rem;max-height:180px;overflow-y:auto;font-family:'IBM Plex Mono',monospace"></div>
+ <h3 style="margin-top:18px">Instructor PIN</h3>
+ <div class="set-row">
+  <input id="new-pin-input" type="password" placeholder="New PIN" maxlength="16">
+  <button class="set-btn" onclick="changePin()">Set</button>
+ </div>
+ <div class="set-note">Changes PIN and saves to Firebase for this session.</div>
 </div>
 <button id="settings-btn" style="display:none" onclick="openSettings()">⚙ Instructor</button>
 
@@ -849,6 +858,7 @@ const FB_CONFIG = {
   appId:"1:1058911893067:web:0ab85f8a600d4fb8d2ffce"
 };
 const COLLECTION = 'lec5_irp';
+const REVIEW_MODE = new URLSearchParams(location.search).get('mode') === 'review';
 let DB = null;
 
 const MARKET = {
@@ -1515,6 +1525,8 @@ function startListening(){
     if(!doc.exists){
       const chips=document.getElementById('roster-chips');if(chips)chips.innerHTML='';
       const rl=document.getElementById('roster-list');if(rl)rl.innerHTML='';
+      document.getElementById('count-present').textContent='0';
+      updateRosterPanel({});
       return;
     }
     const data=doc.data();
@@ -1536,12 +1548,12 @@ function startListening(){
 function updateRosterPanel(participants){
   if(!isInstructor) return;
   const el=document.getElementById('roster-list');
+  const al=document.getElementById('absent-list');
+  const ac=document.getElementById('count-absent');
   if(!el) return;
-  if(!participants){
-    if(!DB) return;
-    return;
-  }
-  el.innerHTML=Object.values(participants).map(p=>{
+  const presentKeys = new Set(Object.keys(participants||{}));
+  // Present list
+  el.innerHTML=Object.values(participants||{}).map(p=>{
     const g=p.group||'?';
     const short=p.name.split(',')[0];
     const months=p.maturity?Math.round(p.maturity*12)+'M':'—';
@@ -1553,6 +1565,24 @@ function updateRosterPanel(participants){
       </span>
     </div>`;
   }).join('');
+  // Absent list: ROSTER names not in participants
+  const absentNames = ALL_NAMES.filter(n=>!presentKeys.has(n));
+  if(ac) ac.textContent=absentNames.length;
+  if(al){
+    if(absentNames.length===0){
+      al.innerHTML='<span style="color:var(--gain)">✓ All students connected!</span>';
+    } else {
+      al.innerHTML=absentNames.map(n=>{
+        const info=ROSTER[n];
+        const short=n.split(',')[0];
+        const g=info?info.g:'?';
+        return `<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:1px 0">
+          <span>${short}</span>
+          <span class="g-badge g${g}b" style="font-size:.6rem">G${g}</span>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 // ─── INSTRUCTOR PANEL ────────────────────────────────────────────────────────
@@ -1561,6 +1591,20 @@ function openSettings(){
   document.getElementById('cur-code-display').textContent=STUDENT_CODE;
 }
 function closeSettings(){document.getElementById('settings').classList.remove('open');}
+
+async function changePin(){
+  const inp=document.getElementById('new-pin-input');
+  const pin=(inp.value||'').trim();
+  if(!pin){ alert('Enter a new PIN.'); return; }
+  INSTR_PIN=pin;
+  await saveConfig();
+  inp.value='';
+  const msg=document.createElement('div');
+  msg.style.cssText='font-size:.7rem;color:var(--gain);margin-top:4px';
+  msg.textContent='✓ PIN updated and saved to Firebase';
+  inp.parentNode.parentNode.appendChild(msg);
+  setTimeout(()=>msg.remove(),2500);
+}
 
 async function changeCode(){
   const inp=document.getElementById('new-code-input');
@@ -1596,11 +1640,13 @@ async function resetSubmissions(){
   // Reset poll view for next session
   const iv=document.getElementById('poll-instr-view');if(iv)iv.style.display='none';
   const sv=document.getElementById('poll-student-view');if(sv)sv.style.display='block';
-  // Clear roster chips
+  // Clear roster chips and lists
   const chips=document.getElementById('roster-chips');if(chips)chips.innerHTML='';
   const rl=document.getElementById('roster-list');if(rl)rl.innerHTML='';
   const cc=document.getElementById('count-correct');if(cc)cc.textContent='0';
   const ct=document.getElementById('count-total');if(ct)ct.textContent='0';
+  document.getElementById('count-present').textContent='0';
+  updateRosterPanel({});
   // Reset CIA exercise state
   ciaSelections={1:null,2:null,3:null,4:null};
   ciaSubmitted=false;
@@ -1626,6 +1672,7 @@ function startImpTimer(){
 // ─── INIT ────────────────────────────────────────────────────────────────────
 populateNames();
 initFirebase();
+if(REVIEW_MODE) enterDeck(); // skip gate in review mode
 </script>
 </body>
 </html>
