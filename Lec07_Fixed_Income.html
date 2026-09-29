@@ -800,11 +800,11 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
      <div class="card-body" style="font-size:.88rem">
       <strong>US Treasury 30yr</strong><br>
       <strong>Face Value:</strong> $100<br>
-      <strong>Coupon:</strong> 4.50% per year (semi-annual)<br>
-      <strong>Maturity:</strong> 20 years<br>
-      <strong>Periods:</strong> n = 40<br>
-      <strong>Current Price:</strong> $105.25<br>
-      <strong>Semi-annual coupon:</strong> $2.25
+      <strong>Coupon:</strong> 4.00% per year (semi-annual)<br>
+      <strong>Maturity:</strong> 30 years<br>
+      <strong>Periods:</strong> n = 60<br>
+      <strong>Current Price:</strong> $100.00<br>
+      <strong>Semi-annual coupon:</strong> $2.00
      </div>
     </div>
    </div>
@@ -817,7 +817,7 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
      </div>
      <div style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:8px">
       <strong style="color:var(--c1)">Q2:</strong> Treasury YTM<br>
-      <span style="font-size:.8rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">=RATE(40, 2.25, −105.25, 100) × 2</span>
+      <span style="font-size:.8rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">=RATE(60, 2.00, −100.00, 100) × 2</span>
      </div>
      <div style="padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px">
       <strong style="color:var(--warn)">Q3:</strong> Credit spread<br>
@@ -842,15 +842,15 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
      <!-- Q1 -->
      <div class="card" style="border-top:3px solid var(--c3)">
       <div class="card-title" style="color:var(--c3)">Q1 (1 pt) — Apple Bond YTM (%)</div>
-      <div class="card-body" style="font-size:.8rem;margin-bottom:6px">Use RATE(60, 2.225, −93.779, 100) × 2. Enter as a percentage (e.g., 4.94).</div>
-      <input class="ex-input" id="ex2-q1-input" type="number" step="0.01" placeholder="e.g. 4.94">
+      <div class="card-body" style="font-size:.8rem;margin-bottom:6px">Use RATE(60, 2.225, −93.779, 100) × 2. Enter as a percentage (e.g., 4.84).</div>
+      <input class="ex-input" id="ex2-q1-input" type="number" step="0.01" placeholder="e.g. 4.84">
       <div id="ex2-q1-fb" class="ex-fb"></div>
      </div>
      <!-- Q2 -->
      <div class="card" style="border-top:3px solid var(--c1)">
       <div class="card-title" style="color:var(--c1)">Q2 (1 pt) — Treasury YTM (%)</div>
-      <div class="card-body" style="font-size:.8rem;margin-bottom:6px">Use RATE(40, 2.25, −105.25, 100) × 2. Enter as a percentage (e.g., 4.10).</div>
-      <input class="ex-input" id="ex2-q2-input" type="number" step="0.01" placeholder="e.g. 4.10">
+      <div class="card-body" style="font-size:.8rem;margin-bottom:6px">Use RATE(60, 2.00, −100.00, 100) × 2. Enter as a percentage (e.g., 4.00).</div>
+      <input class="ex-input" id="ex2-q2-input" type="number" step="0.01" placeholder="e.g. 4.00">
       <div id="ex2-q2-fb" class="ex-fb"></div>
      </div>
     </div>
@@ -883,8 +883,8 @@ table.data tr:nth-child(even) td{background:var(--surface2)}
      <div class="card" style="border-top:3px solid var(--c3)">
       <div class="card-title" style="color:var(--c3)">Answer Key</div>
       <div class="card-body" style="font-size:.78rem;line-height:1.8">
-       Apple YTM: <strong>4.94%</strong><br>
-       Treasury YTM: <strong>4.10%</strong><br>
+       Apple YTM: <strong>4.84%</strong><br>
+       Treasury YTM: <strong>4.00%</strong><br>
        Credit Spread: <strong>0.84%</strong> (84 bp)<br>
        <span style="color:var(--muted)">Apple is AA+ rated — spread is tight. Only 84bp above risk-free!</span>
       </div>
@@ -1008,8 +1008,8 @@ const MORT_DATA = {
 
 // Exercise 2: Apple Bond (3 pts) — same for all
 const APPLE_DATA = {
-  apple_ytm: 4.94,
-  treas_ytm: 4.10,
+  apple_ytm: 4.84,
+  treas_ytm: 4.00,
   credit_spread: 0.84
 };
 
@@ -1451,7 +1451,7 @@ async function submitEx2(){
   // ── Q1: Apple YTM ±0.05 ──
   if(!ex2Correct[1]){
     const q1=parseFloat(q1inp.value);
-    const ok=Math.abs(q1-APPLE_DATA.apple_ytm)<=0.05;
+    const ok=Math.abs(q1-APPLE_DATA.apple_ytm)<=0.10;
     if(ok||isLastTry){ex2Correct[1]=true; ex2Score+=(ok?1:0); q1inp.disabled=true;}
     const fb=document.getElementById('ex2-q1-fb');
     if(fb){fb.style.display='block';fb.style.color=ok?'var(--gain)':'var(--loss)';
@@ -1460,11 +1460,11 @@ async function submitEx2(){
   // ── Q2: Treasury YTM ±0.05 ──
   if(!ex2Correct[2]){
     const q2=parseFloat(q2inp.value);
-    const ok=Math.abs(q2-APPLE_DATA.treas_ytm)<=0.05;
+    const ok=Math.abs(q2-APPLE_DATA.treas_ytm)<=0.10;
     if(ok||isLastTry){ex2Correct[2]=true; ex2Score+=(ok?1:0); q2inp.disabled=true;}
     const fb=document.getElementById('ex2-q2-fb');
     if(fb){fb.style.display='block';fb.style.color=ok?'var(--gain)':'var(--loss)';
-      fb.textContent=ok?`✓ Correct! Treasury YTM ≈ ${APPLE_DATA.treas_ytm}%`:isLastTry?`✗ Answer: ${APPLE_DATA.treas_ytm}%`:`✗ Try again — use RATE(40, 2.25, −105.25, 100) × 2`;}
+      fb.textContent=ok?`✓ Correct! Treasury YTM ≈ ${APPLE_DATA.treas_ytm}%`:isLastTry?`✗ Answer: ${APPLE_DATA.treas_ytm}%`:`✗ Try again — use RATE(60, 2.00, −100.00, 100) × 2 (or: par bond → YTM = coupon rate = 4.00%)`;}
   }
   // ── Q3: credit spread ±0.1 ──
   if(!ex2Correct[3]){
