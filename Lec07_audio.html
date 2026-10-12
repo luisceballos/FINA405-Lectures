@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lec 07 — Fixed Income Markets · Video</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root {
+  --c1:#2563eb; --c2:#059669; --c3:#d97706;
+  --bg:#0f172a; --card:#1e293b; --border:#334155;
+  --text:#f1f5f9; --sub:#94a3b8; --accent:#38bdf8;
+  --bar-h:72px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:#0a1628;border-bottom:1px solid var(--border);flex-shrink:0}
+#topbar .logo{font-size:.72rem;font-weight:700;letter-spacing:.08em;color:var(--sub);text-transform:uppercase}
+#topbar .title{font-size:.95rem;font-weight:600;color:var(--text)}
+#topbar .badge{margin-left:auto;background:var(--border);color:var(--sub);font-size:.7rem;padding:2px 8px;border-radius:20px}
+#slide-counter{font-size:.75rem;color:var(--sub);min-width:60px;text-align:right}
+
+/* ── MAIN SLIDE AREA ── */
+#stage{flex:1;overflow:hidden;position:relative;display:flex;align-items:stretch}
+.slide-panel{display:none;position:absolute;inset:0;flex-direction:column;padding:28px 36px;animation:fadeIn .35s ease}
+.slide-panel.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Slide layout */
+.s-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;opacity:.85}
+.s-eyebrow.c1{color:var(--c1)} .s-eyebrow.c2{color:var(--c2)} .s-eyebrow.c3{color:var(--c3)}
+.s-title{font-size:clamp(1.2rem,3vw,2rem);font-weight:700;line-height:1.2;margin-bottom:18px;color:#e2e8f0}
+.s-sub{font-size:.9rem;color:var(--sub);margin-bottom:22px}
+.s-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+
+/* Cards */
+.vcard{background:var(--card);border-radius:10px;padding:16px 18px;border-left:3px solid var(--border)}
+.vcard.c1{border-left-color:var(--c1)} .vcard.c2{border-left-color:var(--c2)} .vcard.c3{border-left-color:var(--c3)}
+.vcard-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin-bottom:6px}
+.vcard-body{font-size:.9rem;line-height:1.6;color:#cbd5e1}
+.vcard-body strong{color:#e2e8f0}
+
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+/* Big number */
+.big-stat{font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:4px}
+.big-stat.c2{color:var(--c2)} .big-stat.c1{color:var(--c1)} .big-stat.c3{color:var(--c3)}
+
+/* Formula display */
+.formula-box{background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:14px 18px;text-align:center;font-size:1.05rem}
+
+/* Timeline visual */
+.timeline{display:flex;align-items:center;gap:0;margin:8px 0}
+.tl-node{background:var(--c2);color:#fff;font-size:.72rem;font-weight:700;padding:5px 10px;border-radius:6px;white-space:nowrap}
+.tl-arrow{flex:1;height:2px;background:var(--border);position:relative}
+.tl-arrow::after{content:'→';position:absolute;right:-4px;top:-9px;color:var(--sub);font-size:.8rem}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:#0a1628;color:var(--sub);padding:7px 10px;text-align:left;font-weight:600;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase}
+td{padding:7px 10px;border-bottom:1px solid var(--border);color:#cbd5e1}
+tr:hover td{background:#1e293b}
+
+/* Spectrum bar */
+.spectrum{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:10px 0}
+.sp-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;letter-spacing:.04em}
+
+/* Summary items */
+.learned-item{display:flex;gap:14px;align-items:flex-start;background:var(--card);border-radius:8px;padding:12px 14px}
+.learned-num{width:30px;height:30px;border-radius:50%;background:var(--c1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
+.learned-text{font-size:.85rem;line-height:1.55;color:#cbd5e1}
+
+/* ── BOTTOM PLAYER BAR ── */
+#player{height:var(--bar-h);background:#0a1628;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;justify-content:center;padding:0 20px;gap:6px}
+#progress-wrap{position:relative;height:6px;border-radius:3px;background:var(--border);cursor:pointer;margin-bottom:2px}
+#progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--c2),var(--accent));width:0%;transition:width .25s linear;pointer-events:none}
+.slide-tick{position:absolute;top:-3px;width:2px;height:12px;background:#475569;border-radius:1px;transform:translateX(-50%);pointer-events:none}
+.slide-tick.active-tick{background:var(--accent)}
+#time-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.3);cursor:grab;display:none}
+#controls{display:flex;align-items:center;gap:14px}
+#btn-prev,#btn-next{background:none;border:none;color:var(--sub);cursor:pointer;font-size:1.1rem;padding:4px;line-height:1;transition:color .15s}
+#btn-prev:hover,#btn-next:hover{color:var(--text)}
+#btn-play{width:36px;height:36px;border-radius:50%;border:none;background:var(--accent);color:#0a1628;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+#btn-play:hover{background:#7dd3fc}
+#time-display{font-size:.72rem;color:var(--sub);min-width:90px}
+#audio-label{font-size:.72rem;color:var(--sub);margin-left:auto;display:flex;align-items:center;gap:6px}
+#audio-label .dot{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#audio-label .dot.ready{background:var(--c2);animation:none}
+
+#slide-labels-row{display:flex;gap:0;align-items:center;justify-content:space-between;overflow:hidden}
+.sl-dot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;transition:background .2s,transform .2s;flex-shrink:0}
+.sl-dot:hover{transform:scale(1.4)}
+.sl-dot.c2{background:var(--c2);opacity:.5} .sl-dot.c2.cur{opacity:1;transform:scale(1.4)}
+.sl-dot.c1{background:var(--c1);opacity:.5} .sl-dot.c1.cur{opacity:1;transform:scale(1.4)}
+.sl-dot.c3{background:var(--c3);opacity:.5} .sl-dot.c3.cur{opacity:1;transform:scale(1.4)}
+.sl-dot.cn{background:var(--sub);opacity:.5} .sl-dot.cn.cur{opacity:1;transform:scale(1.4)}
+
+#btn-exercises {
+  margin-left:10px; flex-shrink:0;
+  background:var(--c3); color:#fff; font-size:.75rem; font-weight:700;
+  padding:6px 14px; border-radius:20px; text-decoration:none;
+  transition:background .2s, transform .15s; white-space:nowrap;
+}
+#btn-exercises:hover { background:#b45309; transform:scale(1.04); }
+
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">FINA 405</div>
+  <div class="title">Fixed Income Markets — Lecture 7</div>
+  <div class="badge">Async · Fall 2026 · USD</div>
+  <div id="slide-counter">1 / 18</div>
+  <a href="Lec07_Fixed_Income.html" target="_blank" id="btn-exercises" title="Enter your name and complete today's exercises">
+    ✏️ Open Exercises →
+  </a>
+</div>
+
+<div id="stage">
+
+<!-- s0: TITLE -->
+<div class="slide-panel active" id="sp0">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px">
+    <div class="s-eyebrow cn" style="color:var(--accent)">FINA 405 · International Financial Management</div>
+    <div style="font-size:clamp(1.8rem,5vw,3rem);font-weight:800;color:#e2e8f0;line-height:1.15">Fixed Income Markets</div>
+    <div style="font-size:1rem;color:var(--sub)">Lecture 7 · Fall 2026 · University of San Diego</div>
+    <div style="max-width:560px;font-size:.9rem;color:#64748b;margin-top:12px;padding:14px 20px;background:var(--card);border-radius:10px;border:1px solid var(--border)">
+      Today: How do bonds work, what drives yields, and how do investors price credit risk?
+    </div>
+    <div style="max-width:560px;margin-top:10px;padding:14px 20px;background:#1c3a1c;border-radius:10px;border:1px solid #2d6a2d;text-align:left">
+      <div style="font-size:.72rem;font-weight:700;color:#4ade80;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">📋 Async Class Instructions</div>
+      <div style="font-size:.82rem;color:#bbf7d0;line-height:1.6">
+        <strong style="color:#86efac">Step 1</strong> — Watch this video using the ▶ Play button (or navigate slides manually)<br>
+        <strong style="color:#86efac">Step 2</strong> — Click <strong style="color:#fbbf24">✏️ Open Exercises</strong> in the top bar to enter your name and complete Exercises 1 &amp; 2<br>
+        <strong style="color:#86efac">Step 3</strong> — Lecture notes PDF will be posted after class
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s1: OUTLINE -->
+<div class="slide-panel" id="sp1">
+  <div class="s-eyebrow cn">Today's Lecture</div>
+  <div class="s-title">Fixed Income Markets</div>
+  <div class="s-sub">Four sections — bond basics, rates, credit risk, and a live application.</div>
+  <div class="s-body grid2">
+    <div class="vcard c2">
+      <div class="vcard-title">Section 1 — Fixed Income Basics</div>
+      <div class="vcard-body">Bond anatomy, market size, Yield to Maturity (YTM), and two numerical examples.</div>
+    </div>
+    <div class="vcard c1">
+      <div class="vcard-title">Section 2 — The Risk-Free Rate</div>
+      <div class="vcard-body">Who sets rates? The Fed, the T-bond benchmark, and how policy flows to all markets.</div>
+    </div>
+    <div class="vcard c1">
+      <div class="vcard-title">Section 3 — Credit Risk</div>
+      <div class="vcard-body">Credit spreads, Evergrande default, rating agencies, risk-return spectrum, and Exercise 1.</div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">Section 4 — Application</div>
+      <div class="vcard-body">Apple 30-year bond · YTM calculation · Credit spread in practice (Exercise 2).</div>
+    </div>
+  </div>
+</div>
+
+<!-- s2: WHAT IS A BOND -->
+<div class="slide-panel" id="sp2">
+  <div class="s-eyebrow c2">Section 1 — Basics</div>
+  <div class="s-title">What is a Bond?</div>
+  <div class="s-sub">A bond is a loan — the issuer borrows from investors and promises fixed cash flows.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div>
+        <div class="vcard c2" style="margin-bottom:12px">
+          <div class="vcard-title">Key Components</div>
+          <div class="vcard-body">
+            <strong>Face Value (FV)</strong> — amount repaid at maturity (usually $1,000)<br><br>
+            <strong>Coupon Rate</strong> — annual interest as % of FV<br><br>
+            <strong>Maturity</strong> — when FV is repaid (1yr to 30yr+)<br><br>
+            <strong>Price</strong> — what investors pay today (≠ FV)
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="vcard" style="margin-bottom:12px">
+          <div class="vcard-title">Cash Flow Timeline</div>
+          <div class="vcard-body">
+            <div class="timeline">
+              <div class="tl-node">t=0<br><small>−Price</small></div>
+              <div class="tl-arrow"></div>
+              <div class="tl-node">t=1,2…<br><small>+C/2</small></div>
+              <div class="tl-arrow"></div>
+              <div class="tl-node">t=n<br><small>+C/2+FV</small></div>
+            </div>
+            <div style="font-size:.78rem;color:var(--sub);margin-top:8px">Semi-annual coupons are the US standard.<br>C = coupon rate × FV (per year)</div>
+          </div>
+        </div>
+        <div class="vcard c2">
+          <div class="vcard-title">Price vs. YTM</div>
+          <div class="vcard-body" style="font-size:.82rem">
+            Price = FV → <strong>Par</strong> · YTM = Coupon<br>
+            Price &gt; FV → <strong>Premium</strong> · YTM &lt; Coupon<br>
+            Price &lt; FV → <strong>Discount</strong> · YTM &gt; Coupon
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s3: MARKET SIZE -->
+<div class="slide-panel" id="sp3">
+  <div class="s-eyebrow c2">Section 1 — Market Overview</div>
+  <div class="s-title">Fixed Income: Bigger Than Stocks</div>
+  <div class="s-sub">The global bond market dwarfs equities — this is where governments and corporations raise capital.</div>
+  <div class="s-body">
+    <div class="grid3">
+      <div class="vcard c2" style="text-align:center;padding:20px">
+        <div class="big-stat c2">$130T+</div>
+        <div style="font-size:.78rem;color:var(--sub)">Global bond market (2024)</div>
+      </div>
+      <div class="vcard" style="text-align:center;padding:20px">
+        <div class="big-stat" style="color:#64748b">~$110T</div>
+        <div style="font-size:.78rem;color:var(--sub)">Global equities</div>
+      </div>
+      <div class="vcard c2" style="text-align:center;padding:20px">
+        <div class="big-stat c2">$50T+</div>
+        <div style="font-size:.78rem;color:var(--sub)">US bond market · World's largest</div>
+      </div>
+    </div>
+    <div class="vcard">
+      <div class="vcard-title">Who Issues Bonds?</div>
+      <div class="vcard-body grid2" style="margin-top:8px">
+        <div>🏛 <strong>Governments</strong> — T-Bills, T-Notes, T-Bonds (~40%)</div>
+        <div>🏙 <strong>Municipalities</strong> — muni bonds (often tax-exempt)</div>
+        <div>🏢 <strong>Corporations</strong> — investment-grade and high-yield (~25%)</div>
+        <div>🌍 <strong>Supranationals</strong> — World Bank, IMF (~35% other)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s4: YTM -->
+<div class="slide-panel" id="sp4">
+  <div class="s-eyebrow c2">Section 1 — Yield to Maturity</div>
+  <div class="s-title">Price ↔ Yield: The Inverse Relationship</div>
+  <div class="s-sub">YTM is the single discount rate that makes the PV of all cash flows equal to the current price.</div>
+  <div class="s-body">
+    <div class="formula-box" id="f-ytm"></div>
+    <div class="grid2" style="margin-top:4px">
+      <div class="vcard c2">
+        <div class="vcard-title">Why the Inverse Relationship?</div>
+        <div class="vcard-body">
+          If yields ↑ (new bonds pay more), old bonds less attractive → <strong>price ↓</strong><br><br>
+          If yields ↓ (new bonds pay less), old bonds more valuable → <strong>price ↑</strong>
+        </div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Key Insight</div>
+        <div class="vcard-body">
+          YTM is like an IRR for a bond — it accounts for coupon payments <em>and</em> the difference between purchase price and face value at maturity.<br><br>
+          <strong>In Excel:</strong> =RATE(n×2, C/2, −Price, FV) × 2
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s5: EXAMPLE 1 -->
+<div class="slide-panel" id="sp5">
+  <div class="s-eyebrow c2">Section 1 — Example 1</div>
+  <div class="s-title">YTM Calculation: Premium Bond</div>
+  <div class="s-sub">Bond trades above par — what does that tell us about yields?</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c2">
+        <div class="vcard-title">Given Data</div>
+        <div class="vcard-body">
+          Price: <strong>$1,200</strong><br>
+          Face Value: <strong>$1,000</strong><br>
+          Coupon Rate: <strong>15% / yr</strong> (semi-annual)<br>
+          Maturity: <strong>2 years</strong><br>
+          Periods: n = 4
+        </div>
+      </div>
+      <div class="vcard">
+        <div class="vcard-title">Excel / Calculator</div>
+        <div class="vcard-body" style="font-family:monospace;font-size:.88rem">
+          Semi-annual coupon = 15% × $1,000 / 2 = $75<br><br>
+          =RATE(4, 75, −1200, 1000) × 2<br><br>
+          <strong style="color:var(--c2);font-size:1.1rem">= 4.34% per year</strong>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">Interpretation</div>
+      <div class="vcard-body">
+        Price ($1,200) &gt; FV ($1,000) → <strong>Trading at a premium</strong> → YTM (4.34%) &lt; Coupon Rate (15%)<br>
+        The high coupon relative to market rates makes this bond attractive → investors bid up the price.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s6: EXAMPLE 2 -->
+<div class="slide-panel" id="sp6">
+  <div class="s-eyebrow c2">Section 1 — Example 2</div>
+  <div class="s-title">YTM Calculation: Deep Premium Bond</div>
+  <div class="s-sub">Same coupon, longer maturity — how does time affect YTM?</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c2">
+        <div class="vcard-title">Given Data</div>
+        <div class="vcard-body">
+          Price: <strong>$1,500</strong><br>
+          Face Value: <strong>$1,000</strong><br>
+          Coupon Rate: <strong>15% / yr</strong> (semi-annual)<br>
+          Maturity: <strong>10 years</strong><br>
+          Periods: n = 20
+        </div>
+      </div>
+      <div class="vcard">
+        <div class="vcard-title">Excel / Calculator</div>
+        <div class="vcard-body" style="font-family:monospace;font-size:.88rem">
+          Semi-annual coupon = $75<br><br>
+          =RATE(20, 75, −1500, 1000) × 2<br><br>
+          <strong style="color:var(--c2);font-size:1.1rem">= 7.66% per year</strong>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c1">
+      <div class="vcard-title">Compare to Example 1</div>
+      <div class="vcard-body">
+        Longer maturity → higher YTM (7.66% vs 4.34%) — you must earn more to lock up capital for 10 years.<br>
+        Price ($1,500) &gt; FV → still a premium bond. YTM (7.66%) still &lt; Coupon Rate (15%).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s7: FED -->
+<div class="slide-panel" id="sp7">
+  <div class="s-eyebrow c1">Section 2 — The Fed</div>
+  <div class="s-title">Who Controls Interest Rates?</div>
+  <div class="s-sub">The Federal Reserve sets the Federal Funds Rate — which cascades through the entire economy.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c1">
+        <div class="vcard-title">The Federal Reserve</div>
+        <div class="vcard-body">
+          The <strong>Federal Funds Rate</strong> is the overnight rate at which banks lend reserves to each other.<br><br>
+          <strong>Rate hikes 2022–2023:</strong> 0.25% → 5.50%<br>
+          The fastest tightening cycle in 40 years.
+        </div>
+      </div>
+      <div class="vcard">
+        <div class="vcard-title">Rate Transmission</div>
+        <div class="vcard-body" style="font-size:.82rem">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:12px;height:12px;border-radius:50%;background:var(--c1)"></div>
+              <strong>Fed Funds Rate</strong> (overnight)
+            </div>
+            <div style="border-left:2px solid var(--border);margin-left:6px;padding-left:12px;color:var(--sub)">↓</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:12px">
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--c2)"></div>
+              T-bill &amp; T-bond yields
+            </div>
+            <div style="border-left:2px solid var(--border);margin-left:6px;padding-left:12px;color:var(--sub)">↓</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-left:24px">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--c3)"></div>
+              Mortgages · Corporate bonds · Savings rates
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c1" style="font-size:.85rem">
+      <div class="vcard-title">Key Quote</div>
+      <div class="vcard-body">"We will do whatever it takes to restore price stability." — Jerome Powell, Fed Chair (2018–)</div>
+    </div>
+  </div>
+</div>
+
+<!-- s8: T-BOND BENCHMARK -->
+<div class="slide-panel" id="sp8">
+  <div class="s-eyebrow c1">Section 2 — Benchmark Rate</div>
+  <div class="s-title">T-Bonds: The Risk-Free Benchmark</div>
+  <div class="s-sub">Every yield in finance is quoted as a spread over the Treasury rate.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c1">
+        <div class="vcard-title">Why "Risk-Free"?</div>
+        <div class="vcard-body">
+          US Treasury bonds are backed by the full faith and credit of the US government.<br><br>
+          The US has <strong>never defaulted</strong> on its debt.<br><br>
+          Investors treat T-bond yields as the <strong>minimum return</strong> they will accept for any investment.
+        </div>
+      </div>
+      <div class="vcard c2">
+        <div class="vcard-title">The Fundamental Equation</div>
+        <div class="vcard-body" style="text-align:center;padding:10px 0">
+          <div id="f-spread-bench" style="font-size:1.1rem;margin-bottom:10px"></div>
+          <div style="font-size:.8rem;color:var(--sub)">Any borrower with credit risk must pay<br>more than the risk-free rate.</div>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">The Credit Spread</div>
+      <div class="vcard-body">The extra amount above the risk-free rate is the <strong>credit spread</strong> — it compensates investors for the possibility that the borrower might not repay. The higher the default risk, the wider the spread.</div>
+    </div>
+  </div>
+</div>
+
+<!-- s9: CREDIT SPREADS -->
+<div class="slide-panel" id="sp9">
+  <div class="s-eyebrow c1">Section 3 — Credit Risk</div>
+  <div class="s-title">Credit Spreads: Pricing Default Risk</div>
+  <div class="s-sub">Investors demand extra return for the possibility of non-payment.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c1">
+        <div class="vcard-title">The Basic Relationship</div>
+        <div class="vcard-body">
+          <div id="f-spread-eq" style="margin-bottom:10px;font-size:1rem"></div>
+          The spread compensates for:<br>
+          • Probability of default (PD)<br>
+          • Loss given default (LGD)<br>
+          • Illiquidity premium
+        </div>
+      </div>
+      <div class="vcard">
+        <div class="vcard-title">Mortgage Rates — A Real Example</div>
+        <div class="vcard-body">
+          30yr mortgage ≈ 10yr T-bond + <strong>~250–300bp</strong><br><br>
+          When T-bond rate rises 50bp → mortgage rate also rises ~50bp → Higher monthly payments for homebuyers.
+        </div>
+      </div>
+    </div>
+    <div class="vcard c1">
+      <div class="vcard-title">Credit Spread Examples (2024)</div>
+      <div class="vcard-body">
+        <table>
+          <tr><th>Borrower</th><th>Rating</th><th>Spread (bp)</th></tr>
+          <tr><td>US Government</td><td>Risk-free</td><td>0</td></tr>
+          <tr><td>Apple (AAPL)</td><td>AA+</td><td>~84</td></tr>
+          <tr><td>Investment grade corp</td><td>BBB</td><td>~120</td></tr>
+          <tr><td>High yield corp</td><td>BB/B</td><td>~370+</td></tr>
+          <tr><td>Distressed debt</td><td>CCC</td><td>1,000+</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s10: EVERGRANDE -->
+<div class="slide-panel" id="sp10">
+  <div class="s-eyebrow c1">Section 3 — Case Study</div>
+  <div class="s-title">Evergrande: When Spreads Warned First</div>
+  <div class="s-sub">China's largest property developer defaulted in 2021 — bond markets saw it coming.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard" style="border-left-color:#ef4444">
+        <div class="vcard-title">The Collapse</div>
+        <div class="vcard-body">
+          <strong>Evergrande Group</strong> — Chinese real estate giant with over <strong>$300B in liabilities</strong>.<br><br>
+          By mid-2021, bonds traded at <strong>20–30 cents on the dollar</strong>, implying spreads of <strong>2,000+ bp</strong>.<br><br>
+          <strong>December 2021:</strong> Official default declared. Creditors recovered little.
+        </div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Timeline of Distress</div>
+        <div class="vcard-body" style="font-size:.82rem">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div><strong style="color:var(--c2)">2019:</strong> Bonds near par, spread ~500bp — concern rising</div>
+            <div><strong style="color:var(--c3)">2020:</strong> Spread widens to 1,000bp — market alarmed</div>
+            <div><strong style="color:#f97316">Early 2021:</strong> Spreads blow out to 2,000bp</div>
+            <div><strong style="color:#ef4444">Dec 2021:</strong> Official default — market had priced it months earlier</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">Key Lesson</div>
+      <div class="vcard-body"><strong>Bond markets are forward-looking.</strong> Credit spreads started signaling distress long before the official default announcement. Spreads are real-time risk gauges, not lagging indicators.</div>
+    </div>
+  </div>
+</div>
+
+<!-- s11: EXERCISE 1 -->
+<div class="slide-panel" id="sp11">
+  <div class="s-eyebrow c1">Section 3 — Exercise 1 · 2 Points</div>
+  <div class="s-title">Mortgage Rate Exercise</div>
+  <div class="s-sub">Apply the credit spread framework to a real market rate.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c2">
+        <div class="vcard-title">Q1 (1 pt) — Current Mortgage Rate</div>
+        <div class="vcard-body">
+          Use: <strong>Mortgage Rate = T-Bond Rate + Credit Spread</strong><br><br>
+          Look up the current 10-year T-bond yield and add the typical mortgage spread (~250–300 bp).<br><br>
+          Enter as a percentage (e.g., 6.5)
+        </div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Q2 (1 pt) — Fed Rate Hike</div>
+        <div class="vcard-body">
+          The Fed hikes rates by <strong>50 bp (0.50%)</strong>.<br><br>
+          T-bond rate rises by 50bp. Credit spread stays constant.<br><br>
+          What is the new mortgage rate?<br>
+          Enter as a percentage (e.g., 7.0)
+        </div>
+      </div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">Key Insight</div>
+      <div class="vcard-body">When the Fed tightens, the increase passes through almost dollar-for-dollar to mortgage borrowers — this is the <strong>rate transmission mechanism</strong> in action.</div>
+    </div>
+  </div>
+</div>
+
+<!-- s12: RATING AGENCIES -->
+<div class="slide-panel" id="sp12">
+  <div class="s-eyebrow c1">Section 3 — Ratings</div>
+  <div class="s-title">Credit Rating Agencies</div>
+  <div class="s-sub">Moody's, S&amp;P, and Fitch translate credit analysis into a letter grade.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c1">
+        <div class="vcard-title">The Rating Scale</div>
+        <div class="vcard-body" style="font-size:.82rem">
+          <table>
+            <tr><th>Moody's</th><th>S&P / Fitch</th><th>Meaning</th></tr>
+            <tr><td>Aaa</td><td>AAA</td><td>Highest quality</td></tr>
+            <tr><td>Aa1–Aa3</td><td>AA+–AA−</td><td>Very high quality</td></tr>
+            <tr><td>A1–A3</td><td>A+–A−</td><td>High quality</td></tr>
+            <tr><td>Baa1–Baa3</td><td>BBB+–BBB−</td><td style="color:var(--c2)">Investment grade floor</td></tr>
+            <tr><td>Ba1–Ba3</td><td>BB+–BB−</td><td style="color:var(--c3)">Speculative / "Junk"</td></tr>
+            <tr><td>B1–B3</td><td>B+–B−</td><td style="color:#f97316">High risk</td></tr>
+            <tr><td>Caa–C</td><td>CCC–C</td><td style="color:#ef4444">Distressed</td></tr>
+            <tr><td>D</td><td>D</td><td style="color:#dc2626">Default</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="vcard c2" style="margin-bottom:12px">
+          <div class="vcard-title">Why Ratings Matter</div>
+          <div class="vcard-body">Many institutional investors (pension funds, insurance) are <strong>mandated to hold only investment-grade</strong> bonds (BBB− or above). A downgrade below BBB− forces forced selling.</div>
+        </div>
+        <div class="vcard" style="border-left-color:#ef4444">
+          <div class="vcard-title">Limitation</div>
+          <div class="vcard-body">Rating agencies <strong>lag the market</strong>. Evergrande's spread blew out to 2,000bp while its rating was still investment-grade. Real-time credit spreads are the better signal.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s13: RISK-RETURN SPECTRUM -->
+<div class="slide-panel" id="sp13">
+  <div class="s-eyebrow c1">Section 3 — Risk-Return Spectrum</div>
+  <div class="s-title">Riskier Bonds → Higher Yields</div>
+  <div class="s-sub">The risk-return tradeoff is most transparent in fixed income.</div>
+  <div class="s-body">
+    <div class="spectrum">
+      <div class="sp-seg" style="background:#1e40af;flex:1.5">TREASURY</div>
+      <div class="sp-seg" style="background:#2563eb;flex:2">INV. GRADE</div>
+      <div class="sp-seg" style="background:#d97706;flex:2">HIGH YIELD</div>
+      <div class="sp-seg" style="background:#dc2626;flex:1.5">DISTRESSED</div>
+    </div>
+    <div class="grid2" style="margin-top:4px">
+      <div class="vcard" style="border-left-color:#1e40af">
+        <div class="vcard-title">US Treasury</div>
+        <div class="vcard-body"><div class="big-stat" style="color:#60a5fa;font-size:1.6rem">~4.3%</div>Zero default risk · Spread = 0bp · Highest liquidity</div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Investment Grade Corp</div>
+        <div class="vcard-body"><div class="big-stat c1" style="font-size:1.6rem">~5.5%</div>Low default risk · Spread ≈ +120bp · High liquidity</div>
+      </div>
+      <div class="vcard c3">
+        <div class="vcard-title">High Yield ("Junk")</div>
+        <div class="vcard-body"><div class="big-stat c3" style="font-size:1.6rem">~8%+</div>Meaningful default risk · Spread ≈ +370bp+ · Lower liquidity</div>
+      </div>
+      <div class="vcard" style="border-left-color:#dc2626">
+        <div class="vcard-title">Key Principle</div>
+        <div class="vcard-body" style="font-size:.82rem">Higher-yield bonds are not "better" — they <strong>compensate for default, recovery uncertainty, and liquidity risk</strong>. Ratings volatility adds to the premium.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s14: APPLICATION INTRO -->
+<div class="slide-panel" id="sp14">
+  <div class="s-eyebrow c3">Section 4</div>
+  <div class="s-title">Application: Real Bond Pricing</div>
+  <div class="s-sub">Calculating YTM and credit spreads for Apple's 30-year bond</div>
+  <div class="s-body" style="align-items:center;justify-content:center;gap:20px">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+      <div class="vcard c3" style="text-align:center;padding:24px 30px;min-width:180px">
+        <div style="font-size:2.5rem;margin-bottom:8px">🍎</div>
+        <div style="font-weight:700;font-size:1.1rem">Apple Inc.</div>
+        <div style="font-size:.8rem;color:var(--sub)">Ticker: AAPL · Rating: AA+</div>
+      </div>
+      <div class="vcard" style="text-align:center;padding:24px 30px;min-width:180px">
+        <div style="font-size:2.5rem;margin-bottom:8px">📊</div>
+        <div style="font-weight:700;font-size:1.1rem">30-Year Bond</div>
+        <div style="font-size:.8rem;color:var(--sub)">AAPL 4.45 2054</div>
+      </div>
+      <div class="vcard c1" style="text-align:center;padding:24px 30px;min-width:180px">
+        <div style="font-size:2.5rem;margin-bottom:8px">📐</div>
+        <div style="font-weight:700;font-size:1.1rem">Two Questions</div>
+        <div style="font-size:.8rem;color:var(--sub)">YTM · Credit Spread</div>
+      </div>
+    </div>
+    <div class="vcard c3" style="max-width:600px;text-align:center">
+      <div class="vcard-body">We will compute Apple's yield to maturity, the Treasury benchmark yield, and the credit spread that tells us how the market views Apple's credit risk.</div>
+    </div>
+  </div>
+</div>
+
+<!-- s15: APPLE BOND SETUP -->
+<div class="slide-panel" id="sp15">
+  <div class="s-eyebrow c3">Section 4 — Example 3</div>
+  <div class="s-title">Setup: Apple's 30-Year Bond</div>
+  <div class="s-sub">Apple issued long-term bonds in 2024 to fund buybacks — at rates near Treasuries.</div>
+  <div class="s-body">
+    <div class="grid2">
+      <div class="vcard c3">
+        <div class="vcard-title">Apple Bond (AAPL 4.45 2054)</div>
+        <div class="vcard-body" style="font-size:.85rem">
+          Face Value: <strong>$100</strong><br>
+          Coupon: <strong>4.45%/yr</strong> (semi-annual)<br>
+          Maturity: <strong>30 years</strong> · Periods: n = 60<br>
+          Current Price: <strong>$93.779</strong><br>
+          Semi-annual coupon: <strong>$2.225</strong>
+        </div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Benchmark Treasury (30yr)</div>
+        <div class="vcard-body" style="font-size:.85rem">
+          Face Value: <strong>$100</strong><br>
+          Coupon: <strong>4.50%/yr</strong> (semi-annual)<br>
+          Maturity: <strong>20 years</strong> · Periods: n = 40<br>
+          Current Price: <strong>$105.25</strong><br>
+          Semi-annual coupon: <strong>$2.25</strong>
+        </div>
+      </div>
+    </div>
+    <div class="vcard c3">
+      <div class="vcard-title">What We Need to Calculate</div>
+      <div class="vcard-body grid2" style="margin-top:6px">
+        <div><strong>Step 1:</strong> Apple YTM — =RATE(60, 2.225, −93.779, 100) × 2</div>
+        <div><strong>Step 2:</strong> Treasury YTM — =RATE(40, 2.25, −105.25, 100) × 2</div>
+        <div style="grid-column:1/-1"><strong>Step 3:</strong> Credit Spread = Apple YTM − Treasury YTM → expressed in basis points (1% = 100 bp)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s16: EXERCISE 2 -->
+<div class="slide-panel" id="sp16">
+  <div class="s-eyebrow c3">Section 4 — Exercise 2 · 3 Points</div>
+  <div class="s-title">Apple Bond — Your Answers</div>
+  <div class="s-sub">Calculate Apple's yield to maturity and credit spread using the Excel RATE function.</div>
+  <div class="s-body">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="vcard c2">
+        <div class="vcard-title">Q1 (1 pt) — Apple Bond YTM (%)</div>
+        <div class="vcard-body" style="font-family:monospace">=RATE(60, 2.225, −93.779, 100) × 2 → <strong style="color:var(--c2)">≈ 4.84%</strong></div>
+      </div>
+      <div class="vcard c1">
+        <div class="vcard-title">Q2 (1 pt) — Treasury YTM (%)</div>
+        <div class="vcard-body" style="font-family:monospace">=RATE(40, 2.25, −105.25, 100) × 2 → <strong style="color:var(--c1)">≈ 4.10%</strong></div>
+      </div>
+      <div class="vcard c3">
+        <div class="vcard-title">Q3 (1 pt) — Credit Spread (%)</div>
+        <div class="vcard-body">Apple YTM − Treasury YTM = 4.84% − 4.10% = <strong style="color:var(--c3)">0.74% ≈ 74 bp</strong><br>
+        At ~74–84 bp over Treasuries, markets treat Apple (AA+) as nearly default-proof.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- s17: SUMMARY -->
+<div class="slide-panel" id="sp17">
+  <div class="s-eyebrow c3">What We Learned — Fixed Income</div>
+  <div class="s-title">What We Learned Today</div>
+  <div class="s-body" style="gap:10px">
+    <div class="learned-item">
+      <div class="learned-num" style="background:var(--c2)">1</div>
+      <div class="learned-text"><strong>YTM is the key metric.</strong> It's the single discount rate that prices all future cash flows. When price rises, YTM falls — the inverse relationship is fundamental.</div>
+    </div>
+    <div class="learned-item">
+      <div class="learned-num" style="background:var(--c2)">2</div>
+      <div class="learned-text"><strong>The Fed sets the baseline.</strong> Every rate in the economy is anchored to the federal funds rate. When the Fed moves, mortgages, corporate borrowing costs, and bond prices all adjust.</div>
+    </div>
+    <div class="learned-item">
+      <div class="learned-num">3</div>
+      <div class="learned-text"><strong>T-bonds are the risk-free benchmark.</strong> Every rate in finance is anchored to the Treasury yield. Corporates and sovereigns pay a spread above it — the higher the credit risk, the wider the spread.</div>
+    </div>
+    <div class="learned-item">
+      <div class="learned-num">4</div>
+      <div class="learned-text"><strong>Credit spreads price default risk.</strong> i = r<sub>f</sub> + credit spread. Evergrande's spreads blew out to 2,000bp before the actual default — bond markets are forward-looking.</div>
+    </div>
+    <div class="learned-item">
+      <div class="learned-num">5</div>
+      <div class="learned-text"><strong>Ratings are a guide, not a guarantee.</strong> Agencies provide a useful baseline but lag the market. Real-time credit spreads are the best live signal of investor sentiment.</div>
+    </div>
+    <div class="learned-item">
+      <div class="learned-num" style="background:var(--c3)">6</div>
+      <div class="learned-text"><strong>Apple trades near risk-free.</strong> At only ~84bp over Treasuries, markets treat Apple (AA+) as nearly default-proof — a perfect illustration of how credit spreads reveal perceived issuer quality.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /stage -->
+
+<!-- ── BOTTOM PLAYER ── -->
+<div id="player">
+  <div id="slide-labels-row">
+    <div class="sl-dot cn cur" title="Title" data-slide="0"></div>
+    <div class="sl-dot cn" title="Outline" data-slide="1"></div>
+    <div class="sl-dot c2" title="What is a Bond?" data-slide="2"></div>
+    <div class="sl-dot c2" title="Market Size" data-slide="3"></div>
+    <div class="sl-dot c2" title="YTM & Price-Yield" data-slide="4"></div>
+    <div class="sl-dot c2" title="Example 1: 2yr" data-slide="5"></div>
+    <div class="sl-dot c2" title="Example 2: 10yr" data-slide="6"></div>
+    <div class="sl-dot c1" title="Who Controls Rates?" data-slide="7"></div>
+    <div class="sl-dot c1" title="T-Bond Benchmark" data-slide="8"></div>
+    <div class="sl-dot c1" title="Credit Spreads" data-slide="9"></div>
+    <div class="sl-dot c1" title="Evergrande Case" data-slide="10"></div>
+    <div class="sl-dot c1" title="Exercise 1: Mortgage" data-slide="11"></div>
+    <div class="sl-dot c1" title="Rating Agencies" data-slide="12"></div>
+    <div class="sl-dot c1" title="Risk-Return Spectrum" data-slide="13"></div>
+    <div class="sl-dot c3" title="Application" data-slide="14"></div>
+    <div class="sl-dot c3" title="Apple Bond Setup" data-slide="15"></div>
+    <div class="sl-dot c3" title="Exercise 2: Apple Bond" data-slide="16"></div>
+    <div class="sl-dot c3" title="Summary" data-slide="17"></div>
+  </div>
+  <div id="progress-wrap">
+    <div id="progress-fill"></div>
+    <div id="time-cursor"></div>
+  </div>
+  <div id="controls">
+    <button id="btn-prev" title="Previous (←)">&#9664;</button>
+    <button id="btn-play" id="btn-play" title="Play/Pause (Space)">&#9654;</button>
+    <button id="btn-next" title="Next (→)">&#9654;&#9654;</button>
+    <div id="time-display">0:00 / 10:00</div>
+    <div id="audio-label">
+      <div class="dot" id="audio-dot"></div>
+      <span id="audio-status">No audio loaded — add ElevenLabs MP3</span>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden audio element — update src when ElevenLabs audio is ready -->
+<audio id="main-audio" preload="auto">
+  <!-- <source src="Lec07_narration.mp3" type="audio/mpeg"> -->
+</audio>
+
+<script>
+// ── SLIDE CUE TIMES (seconds from audio start) ──────────────────────────────
+// Update these after uploading to ElevenLabs and getting back timestamps
+const CUE_TIMES = [0, 22, 54, 97, 133, 182, 228, 270, 312, 355, 403, 447, 488, 524, 558, 578, 622, 668];
+const N = 18;
+const TOTAL_DURATION = 700; // estimated; updated from audio.duration when loaded
+
+let cur = 0;
+let playing = false;
+let simTime = 0;
+let simInterval = null;
+const audio = document.getElementById('main-audio');
+const hasAudio = audio.src && audio.src !== window.location.href;
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function goTo(n, fromAudio) {
+  if (n < 0 || n >= N) return;
+  document.getElementById('sp' + cur).classList.remove('active');
+  document.querySelectorAll('.sl-dot')[cur].classList.remove('cur');
+  cur = n;
+  document.getElementById('sp' + cur).classList.add('active');
+  document.querySelectorAll('.sl-dot')[cur].classList.add('cur');
+  document.getElementById('slide-counter').textContent = (cur + 1) + ' / ' + N;
+  if (!fromAudio && !hasAudio) {
+    simTime = CUE_TIMES[cur] || 0;
+    updateProgress();
+  }
+  renderKatex();
+}
+
+// ── PROGRESS BAR ─────────────────────────────────────────────────────────────
+function totalDur() { return (audio.duration && !isNaN(audio.duration)) ? audio.duration : TOTAL_DURATION; }
+
+function updateProgress() {
+  const t = hasAudio ? audio.currentTime : simTime;
+  const dur = totalDur();
+  const pct = Math.min(100, (t / dur) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('time-display').textContent = fmt(t) + ' / ' + fmt(dur);
+  // update slide from audio time
+  if (hasAudio || playing) {
+    for (let i = N - 1; i >= 0; i--) {
+      if (t >= CUE_TIMES[i]) { if (cur !== i) goTo(i, true); break; }
+    }
+  }
+}
+
+function fmt(s) {
+  s = Math.floor(s);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+// Add slide tick marks on progress bar
+(function addTicks() {
+  const wrap = document.getElementById('progress-wrap');
+  CUE_TIMES.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'slide-tick';
+    d.style.left = (t / TOTAL_DURATION * 100) + '%';
+    d.title = 'Slide ' + (i + 1);
+    d.dataset.slide = i;
+    d.addEventListener('click', e => { e.stopPropagation(); goTo(i); });
+    wrap.appendChild(d);
+  });
+})();
+
+// ── PLAY / PAUSE ─────────────────────────────────────────────────────────────
+function setPlaying(val) {
+  playing = val;
+  document.getElementById('btn-play').innerHTML = playing ? '&#9646;&#9646;' : '&#9654;';
+  if (hasAudio) {
+    playing ? audio.play() : audio.pause();
+  } else {
+    // simulate playback
+    if (playing) {
+      simInterval = setInterval(() => {
+        simTime += 0.25;
+        if (simTime >= TOTAL_DURATION) { simTime = TOTAL_DURATION; setPlaying(false); }
+        updateProgress();
+      }, 250);
+    } else {
+      clearInterval(simInterval);
+    }
+  }
+}
+
+document.getElementById('btn-play').addEventListener('click', () => setPlaying(!playing));
+document.getElementById('btn-prev').addEventListener('click', () => { setPlaying(false); goTo(cur - 1); });
+document.getElementById('btn-next').addEventListener('click', () => { setPlaying(false); goTo(cur + 1); });
+
+// Click on progress bar to seek
+document.getElementById('progress-wrap').addEventListener('click', function(e) {
+  const rect = this.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const t = pct * totalDur();
+  if (hasAudio) { audio.currentTime = t; }
+  else { simTime = t; updateProgress(); }
+});
+
+// ── AUDIO EVENTS ─────────────────────────────────────────────────────────────
+audio.addEventListener('timeupdate', updateProgress);
+audio.addEventListener('loadedmetadata', () => {
+  document.getElementById('audio-dot').classList.add('ready');
+  document.getElementById('audio-status').textContent = 'Audio ready';
+});
+
+// ── SLIDE DOTS ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.sl-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    const n = parseInt(d.dataset.slide);
+    setPlaying(false);
+    if (hasAudio) { audio.currentTime = CUE_TIMES[n] || 0; }
+    else { simTime = CUE_TIMES[n] || 0; }
+    goTo(n);
+  });
+});
+
+// ── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'k') { e.preventDefault(); setPlaying(!playing); }
+  if (e.key === 'ArrowRight' || e.key === 'l') { setPlaying(false); goTo(cur + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'j') { setPlaying(false); goTo(cur - 1); }
+});
+
+// ── KATEX ─────────────────────────────────────────────────────────────────────
+function renderKatex() {
+  if (typeof katex === 'undefined') return;
+  const defs = {
+    'f-ytm': 'P = \\sum_{t=1}^{2n} \\frac{C/2}{(1+YTM/2)^t} + \\frac{FV}{(1+YTM/2)^{2n}}',
+    'f-spread-eq': 'i_{bond} = r_f + \\text{Credit Spread}',
+    'f-spread-bench': 'i_{\\text{borrower}} = r_{\\text{risk-free}} + \\text{Credit Spread}',
+  };
+  Object.entries(defs).forEach(([id, tex]) => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.rendered) {
+      try { katex.render(tex, el, {displayMode: true, throwOnError: false}); el.dataset.rendered = '1'; }
+      catch(e) {}
+    }
+  });
+}
+
+// Render KaTeX after it loads
+if (document.readyState === 'complete') renderKatex();
+window.addEventListener('load', renderKatex);
+
+// Initial render
+updateProgress();
+</script>
+</body>
+</html>

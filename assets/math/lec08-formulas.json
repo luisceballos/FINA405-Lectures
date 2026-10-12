@@ -1,0 +1,50 @@
+[
+  [
+    "\\begin{gathered}\\mathrm{USDCLP}_{0}=950.00\\\\1\\ \\mathrm{USD}=950.00\\ \\mathrm{CLP}\\end{gathered}",
+    "USDCLP spot is 950: one U.S. dollar buys 950 Chilean pesos."
+  ],
+  [
+    "C=\\frac{FV\\times c}{2}=\\frac{950{,}000{,}000\\times5\\%}{2}=23{,}750{,}000\\ \\mathrm{CLP}",
+    "Half-year coupon equals face value times annual coupon divided by two: CLP 23,750,000."
+  ],
+  [
+    "\\begin{aligned}\\mathrm{PV}_k&=\\frac{CF_{\\mathrm{CLP},k}}{\\left(1+\\frac{r_{\\mathrm{CLP},k}}{2}\\right)^k},\\qquad k=2t\\\\P_{\\mathrm{CLP}}&=\\sum_{k=1}^{10}\\mathrm{PV}_k\\end{aligned}",
+    "Discount each CLP payment at its maturity-specific local rate and sum all ten present values."
+  ],
+  [
+    "P=\\underbrace{C\\,\\frac{1-\\left(1+\\frac y2\\right)^{-10}}{y/2}}_{\\text{PV of coupons}}+\\underbrace{FV\\left(1+\\frac y2\\right)^{-10}}_{\\text{PV of principal}}",
+    "Price equals coupon annuity present value plus principal present value, discounted at the single YTM."
+  ],
+  [
+    "P_{\\mathrm{CLP}}=\\sum_{k=1}^{10}\\frac{CF_{\\mathrm{CLP},k}}{\\left(1+\\frac{y_{\\mathrm{CLP}}}{2}\\right)^k}",
+    "Local YTM is the single annual yield that reproduces the CLP issue price."
+  ],
+  [
+    "\\begin{aligned}y_{\\mathrm{CLP}}=2\\times\\operatorname{RATE}\\bigl(&10,\\ 23750000,\\\\&-P_{\\mathrm{CLP}},\\ 950000000\\bigr)\\end{aligned}",
+    "Excel: =2*RATE(10,23750000,-P_CLP,950000000)"
+  ],
+  [
+    "P_{\\mathrm{USD},0}=\\frac{P_{\\mathrm{CLP},0}}{\\mathrm{USDCLP}_{0}}=\\frac{P_{\\mathrm{CLP},0}}{950}",
+    "Today’s USD proceeds equal today’s CLP issue price divided by spot USDCLP 950."
+  ],
+  [
+    "\\mathrm{USDCLP}^{\\mathrm{fwd}}_{0,t}=950.00\\,\\frac{\\left(1+\\frac{r_{\\mathrm{CLP},t}}{2}\\right)^{2t}}{\\left(1+\\frac{r_{\\mathrm{USD},t}}{2}\\right)^{2t}}",
+    "USDCLP forward equals spot times the local accumulation factor divided by the USD accumulation factor."
+  ],
+  [
+    "\\mathrm{USDCLP}^{\\mathrm{fwd}}_{0,0.5}=950.00\\times\\frac{1.0275}{1.0205}=956.5164",
+    "Six-month forward: 950 times 1.0275 divided by 1.0205, or 956.5164 USDCLP."
+  ],
+  [
+    "\\begin{aligned}CF_{\\mathrm{USD},k}&=\\frac{CF_{\\mathrm{CLP},k}}{\\mathrm{USDCLP}^{\\mathrm{fwd}}_{0,k/2}}\\\\P_{\\mathrm{USD}}&=\\sum_{k=1}^{10}\\frac{CF_{\\mathrm{USD},k}}{\\left(1+\\frac{r_{\\mathrm{USD},k}}{2}\\right)^k}\\end{aligned}",
+    "Convert each CLP cash flow at its forward, then discount at its maturity-specific USD rate."
+  ],
+  [
+    "P_{\\mathrm{USD}}=\\sum_{k=1}^{10}\\frac{CF_{\\mathrm{USD},k}}{\\left(1+\\frac{y_{\\mathrm{USD}}}{2}\\right)^k}",
+    "Solve the USD YTM that reproduces the USD issue price."
+  ],
+  [
+    "\\mathrm{USDCLP}_{t}=950\\left(1+\\delta\\frac{t}{5}\\right)",
+    "Scenario spot USDCLP equals 950 times one plus the FX shock times t divided by five."
+  ]
+]
