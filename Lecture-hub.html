@@ -370,11 +370,16 @@ const SEED = [
   { id:'lec07', week:7, title:'Fixed Income Markets',
     topic:'Bonds, YTM, Credit Spreads & Rating Agencies',
     file:'Lec07_Fixed_Income.html',
-    status:'closed', classLabel:'', notes:'', reviewPdf:'' },
+    status:'closed', classLabel:'', notes:'', reviewPdf:'Review_Notes_Lec07.pdf' },
   { id:'lec08', week:8, title:'Bond Issuance Risk + FRA',
     topic:'Foreign-Currency Debt · Spot, Forwards, FX Scenarios & FRA',
     file:'Lec08_FRA.html',
-    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Two activities (3 + 2 points): price a Chilean-peso bond, contribute an FX forward, and value the hedged USD payments. Firebase tracks attendance, all attempts and scores. Includes a guided FRA demonstration.', reviewPdf:'' },
+    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Two activities (3 + 2 points): price a Chilean-peso bond, contribute an FX forward, and value the hedged USD payments. Firebase tracks attendance, all attempts and scores. Includes a guided FRA demonstration.', reviewPdf:'Review_Notes_Lec08.pdf' },
+  { id:'lec09', week:9, title:'Forward Rate Agreements',
+    topic:'Future Borrowing & Investing · Payoffs & Implied Forward Rates',
+    file:'Lec09_FRA.html',
+    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Future investment and borrowing cases with embedded formulas, matching-maturity market scenarios, an all-class poll, and two instructor-unlocked payoff activities. Firebase records attendance, votes and attempts.', reviewPdf:'Review_Notes_Lec09.pdf' },
+
 ];
 
 /* ══════════════ STATE ══════════════ */
@@ -400,6 +405,7 @@ async function init() {
       });
     }
     renderCards();
+    discoverReviewPdfs();
   };
 
   try { apply(await db.doc(HUB_DOC).get()); } catch(e) { console.warn(e); renderCards(); }
@@ -412,6 +418,27 @@ function pillHtml(status) {
   const map = { student:'🟠 Live', guest:'✓ Review', closed:'Closed' };
   const cls = status === 'student' ? 'live' : status;
   return `<span class="pill ${cls}">${map[status] || 'Closed'}</span>`;
+}
+
+// Discover conventional filenames only when a lecture is available for review.
+// A missing PDF must never produce a broken download link.
+const pdfChecks = new Map();
+async function discoverReviewPdfs() {
+  await Promise.all(lectures.map(async lec => {
+    if (lec.status !== 'guest' || lec.reviewPdf) return;
+    const file = 'Review_Notes_Lec' + String(lec.week).padStart(2, '0') + '.pdf';
+    if (!pdfChecks.has(file)) {
+      pdfChecks.set(file, fetch(file, { method: 'HEAD', cache: 'no-store' })
+        .then(r => r.ok && /application\/pdf/i.test(r.headers.get('content-type') || ''))
+        .catch(() => false));
+    }
+    if (await pdfChecks.get(file)) {
+      lec.reviewPdf = file;
+      renderCards();
+      if (curIdx >= 0 && lectures[curIdx] === lec &&
+          document.getElementById('ov-notes').classList.contains('show')) showNotes(curIdx);
+    }
+  }));
 }
 
 function pdfLabel(f) { return f.replace(/\.pdf$/i, ''); }
@@ -624,6 +651,7 @@ async function saveSettings() {
       updatedAt: new Date().toISOString()
     });
     lectures = updated;
+    discoverReviewPdfs();
     closeOv('ov-instr');
     renderCards();
     showToast('✅ Changes saved');
