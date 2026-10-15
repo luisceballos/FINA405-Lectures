@@ -7,8 +7,13 @@ function payoff(c,R=c.R){const T=c.T2-c.T1,market=(1+R/2)**(2*T),fixed=(1+c.FRA/
 function fair(T1,T2,r1,r2){if(!(T2>T1)||T1<0||r1<=-2||r2<=-2)throw Error('Invalid dates or rates');const T=T2-T1,growth=(1+r2/2)**(2*T2)/(1+r1/2)**(2*T1);return{F:2*(growth**(1/(2*T))-1),growth,T}}
 function activityDemo(){return{caseId:'FRA-DEMO',ccy:'USD',invest:{N:1000000,FRA:.05,R:.03,T1:1,T2:3,side:'invest'},borrow:{N:1000000,FRA:.05,R:.07,T1:1,T2:2,side:'borrow'},version:ACTIVITY_VERSION}}
 function assignment(id){const i=STUDENTS.findIndex(s=>s.id===id);if(i<0)throw Error('Unknown student');const d=activityDemo();d.caseId='FRA-'+String(i+1).padStart(2,'0');d.invest.R=(100+20*i)/10000;d.borrow.R=d.invest.R;return d}
-function caseKey(d){return JSON.stringify(d)}
+// Firestore maps do not preserve object-property insertion order.
+function caseKey(d){
+ const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+ return JSON.stringify(canonical(d))
+}
+function sameCaseKey(key,d){try{return caseKey(JSON.parse(key))===caseKey(d)}catch(e){return false}}
 function grade(d,a,ans){const c=a===1?d.invest:d.borrow,r=payoff(c),fields=['interest','payoff','hedgedInterest'];const checks=fields.map(k=>({key:k,ok:Number.isFinite(ans[k])&&Math.abs(ans[k]-r[k])<=.10,hint:k==='payoff'?'Use the payoff formula for your perspective, with two compounding periods per year.':k==='interest'?'Compound the assigned market rate semiannually over the entire period, then subtract the principal.':'Combine market interest and the signed FRA payoff.'}));const ok=checks.every(c=>c.ok);return{ok,checks,points:ok?(a===1?3:2):0,hint:checks.filter(c=>!c.ok).map(c=>c.hint).join(' ')}}
 function score(r){return(r?.activity1?3:0)+(r?.activity2?2:0)}
-root.Lec09Model={STUDENTS,ACTIVITY_VERSION,parseNumber,payoff,fair,activityDemo,assignment,caseKey,grade,score};if(typeof module!=='undefined')module.exports=root.Lec09Model;
+root.Lec09Model={STUDENTS,ACTIVITY_VERSION,parseNumber,payoff,fair,activityDemo,assignment,caseKey,sameCaseKey,grade,score};if(typeof module!=='undefined')module.exports=root.Lec09Model;
 })(typeof window!=='undefined'?window:globalThis);
