@@ -643,7 +643,7 @@ async function saveSettings() {
       classLabel: (document.getElementById(`lbl-${i}`)?.value || '').trim(),
       notes:      (document.getElementById(`notes-${i}`)?.value || '').trim(),
       // Empty → keep SEED default on next load; non-empty → use saved value
-      reviewPdf:  savedPdf || lec.reviewPdf,
+      reviewPdf:  savedPdf || lec.reviewPdf || '',
     };
   });
 
@@ -651,7 +651,7 @@ async function saveSettings() {
     await db.doc(HUB_DOC).set({
       lectures: updated.map(lec => ({
         id: lec.id, hubStatus: lec.status, hubLabel: lec.classLabel,
-        hubNotes: lec.notes, hubPdf: lec.reviewPdf,
+        hubNotes: lec.notes || '', hubPdf: lec.reviewPdf || '',
       })),
       updatedAt: new Date().toISOString()
     });
