@@ -555,7 +555,7 @@ function openInstrPin() {
 async function checkPin() {
   const btn = document.querySelector('#ov-pin .btn-primary');
   const pin = document.getElementById('pin-in').value.trim();
-  if (!pin) return;
+  if (!pin) { document.getElementById('pin-err').textContent='Enter the instructor PIN.'; document.getElementById('pin-err').style.display='block'; return; }
   btn.disabled = true;
   btn.textContent = 'Signing in…';
   try {
@@ -564,7 +564,7 @@ async function checkPin() {
     buildInstrUI();
     openOv('ov-instr');
   } catch(e) {
-    document.getElementById('pin-err').textContent = 'Incorrect PIN. Please try again.';
+    document.getElementById('pin-err').textContent = e.code === 'auth/network-request-failed' ? 'Connection failed. Check your internet connection and try again.' : 'Incorrect PIN. Please try again.';
     document.getElementById('pin-err').style.display = 'block';
     document.getElementById('pin-in').select();
   } finally {
@@ -577,7 +577,7 @@ async function checkPin() {
 function buildInstrUI() {
   document.getElementById('instr-body').innerHTML = lectures.map((lec, i) => {
     const st = lec.status;
-    const defaultPdf = `Review_Notes_Lec0${lec.week}.pdf`;
+    const defaultPdf = `Review_Notes_Lec${String(lec.week).padStart(2,'0')}.pdf`;
     return `
     <div class="accordion">
       <div class="acc-hd" onclick="toggleAcc(${i})">
@@ -630,7 +630,14 @@ function toggleAcc(i) {
 }
 
 /* ══════════════ SAVE ══════════════ */
+let savingSettings = false;
 async function saveSettings() {
+  if (savingSettings) return;
+  if (!navigator.onLine) { showToast('❌ Not saved: you are offline. Reconnect and try again.'); return; }
+  savingSettings = true;
+  const saveButton = document.querySelector('#ov-instr .btn-gold');
+  saveButton.disabled = true;
+  saveButton.textContent = 'Saving…';
   const updated = lectures.map((lec, i) => {
     let status = lec.status;
     ['closed','student','guest'].forEach(s => {
@@ -662,6 +669,10 @@ async function saveSettings() {
     showToast('✅ Changes saved');
   } catch(e) {
     showToast('❌ Save error: ' + e.message);
+  } finally {
+    savingSettings = false;
+    saveButton.disabled = false;
+    saveButton.textContent = '💾 Save Changes';
   }
 }
 
