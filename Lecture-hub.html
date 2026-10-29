@@ -370,25 +370,25 @@ const SEED = [
   { id:'lec07', week:7, title:'Fixed Income Markets',
     topic:'Bonds, YTM, Credit Spreads & Rating Agencies',
     file:'Lec07_Fixed_Income.html',
-    status:'closed', classLabel:'', notes:'', reviewPdf:'Review_Notes_Lec07.pdf' },
+    status:'closed', classLabel:'', notes:'', reviewPdf:'Review_Notes_Lec07.pdf', examplesPdf:'Practice/Lec07_Practice_5_Questions_and_Solutions.pdf' },
   { id:'lec08', week:8, title:'Bond Issuance Risk + FRA',
     topic:'Foreign-Currency Debt · Spot, Forwards, FX Scenarios & FRA',
     file:'Lec08_FRA.html',
-    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Two activities (3 + 2 points): price a Chilean-peso bond, contribute an FX forward, and value the hedged USD payments. Firebase tracks attendance, all attempts and scores. Includes a guided FRA demonstration.', reviewPdf:'Review_Notes_Lec08.pdf' },
+    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Two activities (3 + 2 points): price a Chilean-peso bond, contribute an FX forward, and value the hedged USD payments. Firebase tracks attendance, all attempts and scores. Includes a guided FRA demonstration.', reviewPdf:'Review_Notes_Lec08.pdf', examplesPdf:'Practice/Lec08_Practice_5_Questions_and_Solutions.pdf' },
   { id:'lec09', week:9, title:'Forward Rate Agreements',
     topic:'Future Borrowing & Investing · Payoffs & Implied Forward Rates',
     file:'Lec09_FRA.html',
-    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Future investment and borrowing cases with embedded formulas, matching-maturity market scenarios, an all-class poll, and two instructor-unlocked payoff activities. Firebase records attendance, votes and attempts.', reviewPdf:'Review_Notes_Lec09.pdf' },
+    status:'student', classLabel:'Two activities · 3 + 2 points', notes:'Future investment and borrowing cases with embedded formulas, matching-maturity market scenarios, an all-class poll, and two instructor-unlocked payoff activities. Firebase records attendance, votes and attempts.', reviewPdf:'Review_Notes_Lec09.pdf', examplesPdf:'Practice/Lec09_Practice_5_Questions_and_Solutions.pdf' },
   { id:'lec10', week:10, title:'Floating Rate Notes + Interest Rate Swaps',
     topic:'SOFR, Coupon Resets & Fixed–Floating Swap Cash Flows',
     file:'Lec10_FRN_Swaps.html',
-    status:'student', classLabel:'Two activities · 2 + 3 points', notes:'Semiannual FRN and swap cash flows. Two instructor-unlocked activities; Firebase records attendance, attempts and scores: Activity 1 (2 points), Activity 2 (3 points), total 5.', reviewPdf:'Review_Notes_Lec10.pdf' },
+    status:'student', classLabel:'Two activities · 2 + 3 points', notes:'Semiannual FRN and swap cash flows. Two instructor-unlocked activities; Firebase records attendance, attempts and scores: Activity 1 (2 points), Activity 2 (3 points), total 5.', reviewPdf:'Review_Notes_Lec10.pdf', examplesPdf:'Practice/Lec10_Practice_5_Questions_and_Solutions.pdf' },
 
   { id:'lec11', week:11, title:'Interest Rate Swaps',
     topic:'Transform Existing Liabilities & Reduce New Borrowing Costs',
     file:'Lec11_IRS.html',
     status:'student', classLabel:'Two activities · 2 + 3 points',
-    notes:'Swap cash flows and final borrowing rates. Activity 1: four semesters (2 points). Activity 2: fixed or floating final rates for ten companies (3 points). Instructor unlocks both activities; Firebase records attendance, attempts and scores.', reviewPdf:'Review_Notes_Lec11.pdf' },
+    notes:'Swap cash flows and final borrowing rates. Activity 1: four semesters (2 points). Activity 2: fixed or floating final rates for ten companies (3 points). Instructor unlocks both activities; Firebase records attendance, attempts and scores.', reviewPdf:'Review_Notes_Lec11.pdf', examplesPdf:'Practice/Lec11_Practice_5_Questions_and_Solutions.pdf' },
 
 
 
@@ -474,7 +474,7 @@ function renderCards() {
     else if (isGuest)   footerLeft = '<span class="ft-cta">Review notes &amp; lecture →</span>';
 
     const pdfRow = ((isGuest || (isStudent && ['lec10','lec11'].includes(lec.id))) && lec.reviewPdf)
-      ? `<div class="pdf-row"><a class="pdf-link" href="${lec.reviewPdf}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${pdfLabel(lec.reviewPdf)}</a></div>`
+      ? `<div class="pdf-row"><a class="pdf-link" href="${lec.reviewPdf}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 Review Notes</a>${isGuest && lec.examplesPdf ? `<a class="pdf-link" href="${lec.examplesPdf}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📝 Examples</a>` : ''}</div>`
       : '';
 
     card.innerHTML = `
@@ -537,7 +537,7 @@ function showNotes(i) {
   const pdfBtn = document.getElementById('notes-pdf-btn');
   if (lec.status === 'guest' && lec.reviewPdf) {
     pdfBtn.href        = lec.reviewPdf;
-    pdfBtn.textContent = '📄 ' + pdfLabel(lec.reviewPdf);
+    pdfBtn.textContent = '📄 Review Notes';
     pdfBtn.style.display = '';
   } else {
     pdfBtn.style.display = 'none';
