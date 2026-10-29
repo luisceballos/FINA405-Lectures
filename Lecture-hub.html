@@ -382,13 +382,13 @@ const SEED = [
   { id:'lec10', week:10, title:'Floating Rate Notes + Interest Rate Swaps',
     topic:'SOFR, Coupon Resets & Fixed–Floating Swap Cash Flows',
     file:'Lec10_FRN_Swaps.html',
-    status:'student', classLabel:'Two activities · 2 + 3 points', notes:'Semiannual FRN and swap cash flows. Two instructor-unlocked activities; Firebase records attendance, attempts and scores: Activity 1 (2 points), Activity 2 (3 points), total 5.' },
+    status:'student', classLabel:'Two activities · 2 + 3 points', notes:'Semiannual FRN and swap cash flows. Two instructor-unlocked activities; Firebase records attendance, attempts and scores: Activity 1 (2 points), Activity 2 (3 points), total 5.', reviewPdf:'Review_Notes_Lec10.pdf' },
 
   { id:'lec11', week:11, title:'Interest Rate Swaps',
     topic:'Transform Existing Liabilities & Reduce New Borrowing Costs',
     file:'Lec11_IRS.html',
     status:'student', classLabel:'Two activities · 2 + 3 points',
-    notes:'Swap cash flows and final borrowing rates. Activity 1: four semesters (2 points). Activity 2: fixed or floating final rates for ten companies (3 points). Instructor unlocks both activities; Firebase records attendance, attempts and scores.' },
+    notes:'Swap cash flows and final borrowing rates. Activity 1: four semesters (2 points). Activity 2: fixed or floating final rates for ten companies (3 points). Instructor unlocks both activities; Firebase records attendance, attempts and scores.', reviewPdf:'Review_Notes_Lec11.pdf' },
 
 
 
@@ -473,7 +473,7 @@ function renderCards() {
     else if (isStudent) footerLeft = '<span class="ft-cta">Join live class →</span>';
     else if (isGuest)   footerLeft = '<span class="ft-cta">Review notes &amp; lecture →</span>';
 
-    const pdfRow = (isGuest && lec.reviewPdf)
+    const pdfRow = ((isGuest || (isStudent && ['lec10','lec11'].includes(lec.id))) && lec.reviewPdf)
       ? `<div class="pdf-row"><a class="pdf-link" href="${lec.reviewPdf}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 ${pdfLabel(lec.reviewPdf)}</a></div>`
       : '';
 
